@@ -43,7 +43,7 @@ fun CreditsDialog(
 ) {
     val context = LocalContext.current
     
-    val repoUrl = "https://github.com/Pong-Development/hardware_dolby"
+    val repoUrl = "https://github.com/crdroidandroid/android_packages_apps_LunarisDolby"
     
     val mainContributors = listOf(
         Contributor(
@@ -200,7 +200,7 @@ fun CreditsDialog(
                                         color = MaterialTheme.colorScheme.onPrimaryContainer
                                     )
                                     Text(
-                                        text = "hardware_dolby",
+                                        text = "android_packages_apps_LunarisDolby",
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                                     )
