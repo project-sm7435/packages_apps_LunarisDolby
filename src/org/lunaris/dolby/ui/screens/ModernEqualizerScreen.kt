@@ -350,7 +350,7 @@ private fun ModernEqualizerContent(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Equalizer View",
+                        text = stringResource(R.string.dolby_geq_view),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -362,7 +362,7 @@ private fun ModernEqualizerContent(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     ViewModeTile(
-                        title = "Curve",
+                        title = stringResource(R.string.dolby_geq_view_curve),
                         icon = Icons.Default.ShowChart,
                         isSelected = viewMode == EqualizerViewMode.CURVE,
                         onClick = { onViewModeChange(EqualizerViewMode.CURVE) },
@@ -370,7 +370,7 @@ private fun ModernEqualizerContent(
                     )
                     
                     ViewModeTile(
-                        title = "Sliders",
+                        title = stringResource(R.string.dolby_geq_view_sliders),
                         icon = Icons.Default.Tune,
                         isSelected = viewMode == EqualizerViewMode.SLIDERS,
                         onClick = { onViewModeChange(EqualizerViewMode.SLIDERS) },
@@ -438,8 +438,8 @@ private fun CurveViewContent(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = if (canEdit) "Interactive Frequency Response" 
-                          else "Frequency Response (Read-only)",
+                    text = if (canEdit) stringResource(R.string.interactive_frequency_response)
+                          else stringResource(R.string.frequency_response_ro),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = if (canEdit) MaterialTheme.colorScheme.onSurface
@@ -451,7 +451,7 @@ private fun CurveViewContent(
                           else MaterialTheme.colorScheme.errorContainer
                 ) {
                     Text(
-                        text = "${state.bandMode.bandCount} bands",
+                        text = "${state.bandMode.bandCount} " + stringResource(R.string.dolby_geq_l_bands),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold,
                         color = if (canEdit) MaterialTheme.colorScheme.onSecondaryContainer
@@ -462,9 +462,9 @@ private fun CurveViewContent(
             }
             Text(
                 text = if (canEdit) 
-                    "Drag the control points to adjust gain (±15 dB) • ${getFrequencyRange(state.bandMode)}"
+                    stringResource(R.string.interactive_frequency_response_summary) + " • ${getFrequencyRange(state.bandMode)}"
                 else
-                    "Read-only view • Band mode mismatch",
+                    stringResource(R.string.frequency_response_ro_summary),
                 style = MaterialTheme.typography.bodySmall,
                 color = if (canEdit) MaterialTheme.colorScheme.onSurfaceVariant
                       else MaterialTheme.colorScheme.error,
@@ -559,7 +559,7 @@ private fun SlidersViewContent(
                 ) {
                     Text(
                         text = if (canEdit) stringResource(R.string.dolby_geq_slider_label_gain)
-                              else "${stringResource(R.string.dolby_geq_slider_label_gain)} (Read-only)",
+                              else "${stringResource(R.string.dolby_geq_slider_label_gain)} (${stringResource(R.string.dolby_read_only)})",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = if (canEdit) MaterialTheme.colorScheme.onSurface

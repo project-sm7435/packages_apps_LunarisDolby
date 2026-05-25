@@ -238,7 +238,7 @@ private fun ModernDolbySettingsContent(
                 exit = fadeOut() + shrinkVertically()
             ) {
                 ModernSettingsCard(
-                    title = "Intelligent Equalizer",
+                    title = stringResource(R.string.dolby_ieq),
                     icon = Icons.Default.GraphicEq
                 ) {
                     ModernIeqSelector(
