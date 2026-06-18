@@ -57,13 +57,34 @@ data class BandGain(
     val gain: Int = 0
 )
 
+enum class AudioDeviceCategory {
+    SPEAKER,
+    WIRED,
+    BLUETOOTH,
+    USB,
+    OTHER
+}
+
+data class ActiveAudioDevice(
+    val name: String,
+    val category: AudioDeviceCategory
+) {
+    val isOnSpeaker: Boolean
+        get() = category == AudioDeviceCategory.SPEAKER
+
+    companion object {
+        val Unknown = ActiveAudioDevice("Unknown", AudioDeviceCategory.OTHER)
+    }
+}
+
 sealed class DolbyUiState {
     object Loading : DolbyUiState()
     data class Success(
         val settings: DolbySettings,
         val profileSettings: ProfileSettings,
         val currentPresetName: String,
-        val isOnSpeaker: Boolean
+        val isOnSpeaker: Boolean,
+        val activeAudioDevice: ActiveAudioDevice
     ) : DolbyUiState()
     data class Error(val message: String) : DolbyUiState()
 }
