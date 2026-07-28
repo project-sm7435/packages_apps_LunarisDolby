@@ -985,19 +985,23 @@ class DolbyRepository(private val context: Context) : AutoCloseable {
         
         private val FIFTEEN_BAND_INDICES = listOf(0, 1, 2, 3, 4, 5, 6, 8, 11, 12, 14, 15, 17, 18, 19)
         
-        private val BASS_CURVES = listOf(
+                private val BASS_CURVES = listOf(
+            // Curve 0: ViPER Natural Bass (2nd-order Butterworth simulation)
             floatArrayOf(
-                1.00f, 1.00f, 0.95f, 0.90f, 0.80f, 0.70f, 0.55f, 0.40f, 0.25f, 0.15f,
+                1.15f, 1.10f, 0.85f, 0.50f, 0.20f, 0.05f, 0.00f, 0.00f, 0.00f, 0.00f,
                 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f
             ),
+            // Curve 1: ViPER Pure Bass (4th-order Chebyshev steep cutoff simulation)
             floatArrayOf(
-                1.20f, 1.15f, 1.05f, 0.90f, 0.70f, 0.55f, 0.40f, 0.25f, 0.10f, 0.05f,
+                1.35f, 1.20f, 0.25f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f,
                 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f
             ),
+            // Curve 2: ViPER Subwoofer (Peaking resonant shelf simulation)
             floatArrayOf(
-                0.90f, 0.95f, 1.00f, 1.00f, 0.90f, 0.75f, 0.60f, 0.45f, 0.30f, 0.20f,
-                0.10f, 0.05f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f
+                1.10f, 1.35f, 1.00f, 0.65f, 0.30f, 0.10f, 0.00f, 0.00f, 0.00f, 0.00f,
+                0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f
             )
         )
+
     }
 }
