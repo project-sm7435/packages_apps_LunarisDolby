@@ -104,6 +104,12 @@ fun CreditsDialog(
             githubUsername = "MrTopia",
             contribution = "Adding per-device dolby state memory",
             isHighlighted = true
+       ),
+       Contributor(
+             name = "Joseph Montfort. F",
+             githubUsername = "JosephMontfort",
+             contribution = "Ported as a System App for OEM ROMs",
+             isHighlighted = true
         )
     )
     
@@ -114,7 +120,8 @@ fun CreditsDialog(
         translation("Polish", t("Kacper", "ziomek3120"), t("rehork")),
         translation("Traditional Chinese", t("DenlNister", "nnn950711")),
         translation("Turkish", t("Ümit Taylan", "jinetty")),
-        translation("Russian", t("Dmitry", "dkpost3"))
+        translation("Russian", t("Dmitry", "dkpost3")),
+        translation("Vietnamese", t("ZetyaWyn"))
     )
     
     Dialog(
