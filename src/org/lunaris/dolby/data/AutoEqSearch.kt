@@ -7,16 +7,15 @@ package org.lunaris.dolby.data.autoeq
 
 object AutoEqSearch {
     fun search(query: String, index: List<IndexEntry>): List<IndexEntry> {
-        val uniqueIndex = index.distinctBy { it.id }
-        if (query.isBlank()) return uniqueIndex
-
+        if (query.isBlank()) return index
+        
         val normalizedQuery = query.filter { it.isLetterOrDigit() }.lowercase()
-
-        val primary = uniqueIndex.filter { it.searchKey.startsWith(normalizedQuery) }
-        val secondary = uniqueIndex.filter {
-            it.searchKey.contains(normalizedQuery) && !it.searchKey.startsWith(normalizedQuery)
+        
+        val primary = index.filter { it.searchKey.startsWith(normalizedQuery) }
+        val secondary = index.filter { 
+            it.searchKey.contains(normalizedQuery) && !it.searchKey.startsWith(normalizedQuery) 
         }
-
+        
         return primary + secondary
     }
 }

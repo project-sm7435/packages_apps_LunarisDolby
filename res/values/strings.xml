@@ -209,9 +209,4 @@
     <string name="dolby_autoeq_search">Search</string>
     <string name="dolby_autoeq_active">Active profile</string>
     <string name="dolby_autoeq_selected">Selected profile</string>
-    <string name="dolby_autoeq_sync">Sync AutoEQ database</string>
-    <string name="dolby_autoeq_local_count">%1$d local profiles</string>
-    <string name="dolby_autoeq_local_ready">Bundled AutoEQ database</string>
-    <string name="dolby_autoeq_no_profiles">No AutoEQ profiles found</string>
-    <string name="dolby_autoeq_no_matches">No matching profiles</string>
 </resources>
