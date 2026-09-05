@@ -69,23 +69,25 @@ fun ProfileCarousel(
         listOf(Color(0xFFa18cd1), Color(0xFFfbc2eb))
     )
     
-    val initialPage = profileValues.indexOfFirst { it.toInt() == currentProfile }.coerceAtLeast(0)
+    val targetPage = profileValues.indexOfFirst { it.toInt() == currentProfile }.coerceAtLeast(0)
     val pagerState = rememberPagerState(
-        initialPage = initialPage,
+        initialPage = targetPage,
         pageCount = { profiles.size }
     )
     
-    var lastPage by remember { mutableIntStateOf(initialPage) }
+    // Smoothly scroll pager when external profile changes (device switch, restore, etc.)
+    LaunchedEffect(targetPage) {
+        if (pagerState.currentPage != targetPage) {
+            pagerState.animateScrollToPage(targetPage)
+        }
+    }
     
-    LaunchedEffect(pagerState.currentPage) {
-        if (pagerState.currentPage != lastPage) {
+    // Dispatch profile changes when user swipes and pager settles
+    LaunchedEffect(pagerState.settledPage) {
+        val selectedValue = profileValues.getOrNull(pagerState.settledPage)?.toIntOrNull()
+        if (selectedValue != null && selectedValue != currentProfile) {
             haptic.performHaptic(HapticFeedbackHelper.HapticIntensity.CLICK)
-            lastPage = pagerState.currentPage
-            
-            if (pagerState.currentPage != initialPage) {
-                val selectedValue = profileValues[pagerState.currentPage].toInt()
-                onProfileChange(selectedValue)
-            }
+            onProfileChange(selectedValue)
         }
     }
     

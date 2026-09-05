@@ -14,6 +14,11 @@ data class AutoEqMetadata(
     val indexHash: String,
     val timestamp: Long? = null
 ) {
+    fun contentEquals(other: AutoEqMetadata): Boolean =
+        version == other.version &&
+            profileCount == other.profileCount &&
+            indexHash.equals(other.indexHash, ignoreCase = true)
+
     companion object {
         fun fromJson(json: String): AutoEqMetadata {
             val obj = JSONObject(json)

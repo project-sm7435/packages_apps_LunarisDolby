@@ -12,28 +12,40 @@ import org.lunaris.dolby.DolbyConstants
 import org.lunaris.dolby.data.DolbyRepository
 import org.lunaris.dolby.domain.models.*
 import org.lunaris.dolby.service.DolbyEffectService
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.cancelChildren
 
 class DolbyViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val repository = DolbyRepository(application)
+    private val repository = DolbyRepository.getInstance(application)
 
     private val _uiState = MutableStateFlow<DolbyUiState>(DolbyUiState.Loading)
     val uiState: StateFlow<DolbyUiState> = _uiState.asStateFlow()
     val currentProfile: StateFlow<Int> = repository.currentProfile
     
+    private val bassLevelChannel = Channel<Int>(Channel.CONFLATED)
+    private val midLevelChannel = Channel<Int>(Channel.CONFLATED)
+    private val trebleLevelChannel = Channel<Int>(Channel.CONFLATED)
+    private val stereoWideningChannel = Channel<Int>(Channel.CONFLATED)
+    private val dialogueEnhancerAmountChannel = Channel<Int>(Channel.CONFLATED)
+
     private var audioOutputStateJob: Job? = null
     private var profileChangeJob: Job? = null
+    private var deviceProfileChangeJob: Job? = null
     private var isCleared = false
 
     init {
         DolbyConstants.dlog(TAG, "ViewModel initialized")
         loadSettings()
+        startTuningWorkers()
         observeAudioOutputState()
         observeProfileChanges()
+        observeDeviceProfileChanges()
     }
     
     private fun observeAudioOutputState() {
@@ -60,6 +72,76 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    private fun observeDeviceProfileChanges() {
+        deviceProfileChangeJob?.cancel()
+        deviceProfileChangeJob = viewModelScope.launch {
+            repository.deviceProfileChanged.collect {
+                if (!isCleared) {
+                    DolbyConstants.dlog(TAG, "Device profile changed, reloading settings")
+                    loadSettings()
+                }
+            }
+        }
+    }
+
+    private fun startTuningWorkers() {
+        viewModelScope.launch(Dispatchers.Default) {
+            for (level in bassLevelChannel) {
+                if (isCleared) break
+                try {
+                    val profile = repository.getCurrentProfile()
+                    repository.setBassLevel(profile, level)
+                } catch (e: Exception) {
+                    DolbyConstants.dlog(TAG, "Error setting bass level: ${e.message}")
+                }
+            }
+        }
+        viewModelScope.launch(Dispatchers.Default) {
+            for (level in midLevelChannel) {
+                if (isCleared) break
+                try {
+                    val profile = repository.getCurrentProfile()
+                    repository.setMidLevel(profile, level)
+                } catch (e: Exception) {
+                    DolbyConstants.dlog(TAG, "Error setting mid level: ${e.message}")
+                }
+            }
+        }
+        viewModelScope.launch(Dispatchers.Default) {
+            for (level in trebleLevelChannel) {
+                if (isCleared) break
+                try {
+                    val profile = repository.getCurrentProfile()
+                    repository.setTrebleLevel(profile, level)
+                } catch (e: Exception) {
+                    DolbyConstants.dlog(TAG, "Error setting treble level: ${e.message}")
+                }
+            }
+        }
+        viewModelScope.launch(Dispatchers.Default) {
+            for (amount in stereoWideningChannel) {
+                if (isCleared) break
+                try {
+                    val profile = repository.getCurrentProfile()
+                    repository.setStereoWideningAmount(profile, amount)
+                } catch (e: Exception) {
+                    DolbyConstants.dlog(TAG, "Error setting stereo widening: ${e.message}")
+                }
+            }
+        }
+        viewModelScope.launch(Dispatchers.Default) {
+            for (amount in dialogueEnhancerAmountChannel) {
+                if (isCleared) break
+                try {
+                    val profile = repository.getCurrentProfile()
+                    repository.setDialogueEnhancerAmount(profile, amount)
+                } catch (e: Exception) {
+                    DolbyConstants.dlog(TAG, "Error setting dialogue enhancer amount: ${e.message}")
+                }
+            }
+        }
+    }
+
     fun loadSettings() {
         if (isCleared) {
             DolbyConstants.dlog(TAG, "ViewModel cleared, skipping loadSettings")
@@ -68,40 +150,44 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
         
         viewModelScope.launch {
             try {
-                val enabled = repository.getDolbyEnabled()
-                val profile = repository.getCurrentProfile()
-                val bandMode = repository.getBandMode()
-                
-                val settings = DolbySettings(
-                    enabled = enabled,
-                    currentProfile = profile,
-                    bassEnhancerEnabled = repository.getBassEnhancerEnabled(profile),
-                    volumeLevelerEnabled = repository.getVolumeLevelerEnabled(profile),
-                    bandMode = bandMode
-                )
-                
-                val profileSettings = ProfileSettings(
-                    profile = profile,
-                    ieqPreset = repository.getIeqPreset(profile),
-                    headphoneVirtualizerEnabled = repository.getHeadphoneVirtualizerEnabled(profile),
-                    speakerVirtualizerEnabled = repository.getSpeakerVirtualizerEnabled(profile),
-                    stereoWideningAmount = repository.getStereoWideningAmount(profile),
-                    dialogueEnhancerEnabled = repository.getDialogueEnhancerEnabled(profile),
-                    dialogueEnhancerAmount = repository.getDialogueEnhancerAmount(profile),
-                    bassLevel = repository.getBassLevel(profile),
-                    midLevel = repository.getMidLevel(profile),
-                    trebleLevel = repository.getTrebleLevel(profile),
-                    bassCurve = repository.getBassCurve(profile)
-                )
-                
-                if (!isCleared) {
-                    _uiState.value = DolbyUiState.Success(
+                val successState = withContext(Dispatchers.IO) {
+                    val enabled = repository.getDolbyEnabled()
+                    val profile = repository.getCurrentProfile()
+                    val bandMode = repository.getBandMode()
+                    
+                    val settings = DolbySettings(
+                        enabled = enabled,
+                        currentProfile = profile,
+                        bassEnhancerEnabled = repository.getBassEnhancerEnabled(profile),
+                        volumeLevelerEnabled = repository.getVolumeLevelerEnabled(profile),
+                        bandMode = bandMode
+                    )
+                    
+                    val profileSettings = ProfileSettings(
+                        profile = profile,
+                        ieqPreset = repository.getIeqPreset(profile),
+                        headphoneVirtualizerEnabled = repository.getHeadphoneVirtualizerEnabled(profile),
+                        speakerVirtualizerEnabled = repository.getSpeakerVirtualizerEnabled(profile),
+                        stereoWideningAmount = repository.getStereoWideningAmount(profile),
+                        dialogueEnhancerEnabled = repository.getDialogueEnhancerEnabled(profile),
+                        dialogueEnhancerAmount = repository.getDialogueEnhancerAmount(profile),
+                        bassLevel = repository.getBassLevel(profile),
+                        midLevel = repository.getMidLevel(profile),
+                        trebleLevel = repository.getTrebleLevel(profile),
+                        bassCurve = repository.getBassCurve(profile)
+                    )
+                    
+                    DolbyUiState.Success(
                         settings = settings,
                         profileSettings = profileSettings,
                         currentPresetName = repository.getPresetName(profile),
                         isOnSpeaker = repository.isOnSpeaker.value,
                         activeAudioDevice = repository.activeAudioDevice.value
                     )
+                }
+                
+                if (!isCleared) {
+                    _uiState.value = successState
                 }
             } catch (e: Exception) {
                 if (!isCleared) {
@@ -113,7 +199,13 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun setDolbyEnabled(enabled: Boolean) {
-        viewModelScope.launch {
+        val current = _uiState.value
+        if (current is DolbyUiState.Success) {
+            _uiState.value = current.copy(
+                settings = current.settings.copy(enabled = enabled)
+            )
+        }
+        viewModelScope.launch(Dispatchers.Default) {
             try {
                 repository.setDolbyEnabled(enabled)
                 if (enabled) {
@@ -129,7 +221,13 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun setProfile(profile: Int) {
-        viewModelScope.launch {
+        val current = _uiState.value
+        if (current is DolbyUiState.Success) {
+            _uiState.value = current.copy(
+                settings = current.settings.copy(currentProfile = profile)
+            )
+        }
+        viewModelScope.launch(Dispatchers.Default) {
             try {
                 repository.setCurrentProfile(profile)
             } catch (e: Exception) {
@@ -139,11 +237,16 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun setBassEnhancer(enabled: Boolean) {
-        viewModelScope.launch {
+        val current = _uiState.value
+        if (current is DolbyUiState.Success) {
+            _uiState.value = current.copy(
+                settings = current.settings.copy(bassEnhancerEnabled = enabled)
+            )
+        }
+        viewModelScope.launch(Dispatchers.Default) {
             try {
                 val profile = repository.getCurrentProfile()
                 repository.setBassEnhancerEnabled(profile, enabled)
-                loadSettings()
             } catch (e: Exception) {
                 DolbyConstants.dlog(TAG, "Error setting bass enhancer: ${e.message}")
             }
@@ -151,27 +254,29 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun setBassLevel(level: Int) {
-        viewModelScope.launch {
-            try {
-                val profile = repository.getCurrentProfile()
-                repository.setBassLevel(profile, level)
-                loadSettings()
-            } catch (e: IllegalArgumentException) {
-                DolbyConstants.dlog(TAG, "Invalid bass level: ${e.message}")
-                _uiState.value = DolbyUiState.Error("Invalid bass level: ${e.message}")
-            } catch (e: Exception) {
-                DolbyConstants.dlog(TAG, "Error setting bass level: ${e.message}")
-                _uiState.value = DolbyUiState.Error("Failed to set bass level")
-            }
+        val current = _uiState.value
+        if (current is DolbyUiState.Success) {
+            if (current.profileSettings.bassLevel == level) return
+            _uiState.value = current.copy(
+                settings = current.settings.copy(bassEnhancerEnabled = level > 0),
+                profileSettings = current.profileSettings.copy(bassLevel = level)
+            )
         }
+        bassLevelChannel.trySend(level)
     }
 
     fun setBassCurve(curve: Int) {
-        viewModelScope.launch {
+        val current = _uiState.value
+        if (current is DolbyUiState.Success) {
+            if (current.profileSettings.bassCurve == curve) return
+            _uiState.value = current.copy(
+                profileSettings = current.profileSettings.copy(bassCurve = curve)
+            )
+        }
+        viewModelScope.launch(Dispatchers.Default) {
             try {
                 val profile = repository.getCurrentProfile()
                 repository.setBassCurve(profile, curve)
-                loadSettings()
             } catch (e: Exception) {
                 DolbyConstants.dlog(TAG, "Error setting bass curve: ${e.message}")
             }
@@ -179,43 +284,38 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun setMidLevel(level: Int) {
-        viewModelScope.launch {
-            try {
-                val profile = repository.getCurrentProfile()
-                repository.setMidLevel(profile, level)
-                loadSettings()
-            } catch (e: IllegalArgumentException) {
-                DolbyConstants.dlog(TAG, "Invalid mid level: ${e.message}")
-                _uiState.value = DolbyUiState.Error("Invalid mid level: ${e.message}")
-            } catch (e: Exception) {
-                DolbyConstants.dlog(TAG, "Error setting mid level: ${e.message}")
-                _uiState.value = DolbyUiState.Error("Failed to set mid level")
-            }
+        val current = _uiState.value
+        if (current is DolbyUiState.Success) {
+            if (current.profileSettings.midLevel == level) return
+            _uiState.value = current.copy(
+                profileSettings = current.profileSettings.copy(midLevel = level)
+            )
         }
+        midLevelChannel.trySend(level)
     }
 
     fun setTrebleLevel(level: Int) {
-        viewModelScope.launch {
-            try {
-                val profile = repository.getCurrentProfile()
-                repository.setTrebleLevel(profile, level)
-                loadSettings()
-            } catch (e: IllegalArgumentException) {
-                DolbyConstants.dlog(TAG, "Invalid treble level: ${e.message}")
-                _uiState.value = DolbyUiState.Error("Invalid treble level: ${e.message}")
-            } catch (e: Exception) {
-                DolbyConstants.dlog(TAG, "Error setting treble level: ${e.message}")
-                _uiState.value = DolbyUiState.Error("Failed to set treble level")
-            }
+        val current = _uiState.value
+        if (current is DolbyUiState.Success) {
+            if (current.profileSettings.trebleLevel == level) return
+            _uiState.value = current.copy(
+                profileSettings = current.profileSettings.copy(trebleLevel = level)
+            )
         }
+        trebleLevelChannel.trySend(level)
     }
 
     fun setVolumeLeveler(enabled: Boolean) {
-        viewModelScope.launch {
+        val current = _uiState.value
+        if (current is DolbyUiState.Success) {
+            _uiState.value = current.copy(
+                settings = current.settings.copy(volumeLevelerEnabled = enabled)
+            )
+        }
+        viewModelScope.launch(Dispatchers.Default) {
             try {
                 val profile = repository.getCurrentProfile()
                 repository.setVolumeLevelerEnabled(profile, enabled)
-                loadSettings()
             } catch (e: Exception) {
                 DolbyConstants.dlog(TAG, "Error setting volume leveler: ${e.message}")
             }
@@ -223,11 +323,16 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun setIeqPreset(preset: Int) {
-        viewModelScope.launch {
+        val current = _uiState.value
+        if (current is DolbyUiState.Success) {
+            _uiState.value = current.copy(
+                profileSettings = current.profileSettings.copy(ieqPreset = preset)
+            )
+        }
+        viewModelScope.launch(Dispatchers.Default) {
             try {
                 val profile = repository.getCurrentProfile()
                 repository.setIeqPreset(profile, preset)
-                loadSettings()
             } catch (e: Exception) {
                 DolbyConstants.dlog(TAG, "Error setting IEQ preset: ${e.message}")
             }
@@ -235,11 +340,16 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun setHeadphoneVirtualizer(enabled: Boolean) {
-        viewModelScope.launch {
+        val current = _uiState.value
+        if (current is DolbyUiState.Success) {
+            _uiState.value = current.copy(
+                profileSettings = current.profileSettings.copy(headphoneVirtualizerEnabled = enabled)
+            )
+        }
+        viewModelScope.launch(Dispatchers.Default) {
             try {
                 val profile = repository.getCurrentProfile()
                 repository.setHeadphoneVirtualizerEnabled(profile, enabled)
-                loadSettings()
             } catch (e: Exception) {
                 DolbyConstants.dlog(TAG, "Error setting headphone virtualizer: ${e.message}")
             }
@@ -247,11 +357,16 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun setSpeakerVirtualizer(enabled: Boolean) {
-        viewModelScope.launch {
+        val current = _uiState.value
+        if (current is DolbyUiState.Success) {
+            _uiState.value = current.copy(
+                profileSettings = current.profileSettings.copy(speakerVirtualizerEnabled = enabled)
+            )
+        }
+        viewModelScope.launch(Dispatchers.Default) {
             try {
                 val profile = repository.getCurrentProfile()
                 repository.setSpeakerVirtualizerEnabled(profile, enabled)
-                loadSettings()
             } catch (e: Exception) {
                 DolbyConstants.dlog(TAG, "Error setting speaker virtualizer: ${e.message}")
             }
@@ -259,23 +374,27 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun setStereoWidening(amount: Int) {
-        viewModelScope.launch {
-            try {
-                val profile = repository.getCurrentProfile()
-                repository.setStereoWideningAmount(profile, amount)
-                loadSettings()
-            } catch (e: Exception) {
-                DolbyConstants.dlog(TAG, "Error setting stereo widening: ${e.message}")
-            }
+        val current = _uiState.value
+        if (current is DolbyUiState.Success) {
+            if (current.profileSettings.stereoWideningAmount == amount) return
+            _uiState.value = current.copy(
+                profileSettings = current.profileSettings.copy(stereoWideningAmount = amount)
+            )
         }
+        stereoWideningChannel.trySend(amount)
     }
 
     fun setDialogueEnhancer(enabled: Boolean) {
-        viewModelScope.launch {
+        val current = _uiState.value
+        if (current is DolbyUiState.Success) {
+            _uiState.value = current.copy(
+                profileSettings = current.profileSettings.copy(dialogueEnhancerEnabled = enabled)
+            )
+        }
+        viewModelScope.launch(Dispatchers.Default) {
             try {
                 val profile = repository.getCurrentProfile()
                 repository.setDialogueEnhancerEnabled(profile, enabled)
-                loadSettings()
             } catch (e: Exception) {
                 DolbyConstants.dlog(TAG, "Error setting dialogue enhancer: ${e.message}")
             }
@@ -283,19 +402,18 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun setDialogueEnhancerAmount(amount: Int) {
-        viewModelScope.launch {
-            try {
-                val profile = repository.getCurrentProfile()
-                repository.setDialogueEnhancerAmount(profile, amount)
-                loadSettings()
-            } catch (e: Exception) {
-                DolbyConstants.dlog(TAG, "Error setting dialogue enhancer amount: ${e.message}")
-            }
+        val current = _uiState.value
+        if (current is DolbyUiState.Success) {
+            if (current.profileSettings.dialogueEnhancerAmount == amount) return
+            _uiState.value = current.copy(
+                profileSettings = current.profileSettings.copy(dialogueEnhancerAmount = amount)
+            )
         }
+        dialogueEnhancerAmountChannel.trySend(amount)
     }
 
     fun resetAllProfiles() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.Default) {
             try {
                 repository.resetAllProfiles()
                 loadSettings()
@@ -314,12 +432,19 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
     override fun onCleared() {
         DolbyConstants.dlog(TAG, "ViewModel onCleared")
         isCleared = true
+        repository.flushPendingDeviceProfile()
+        bassLevelChannel.close()
+        midLevelChannel.close()
+        trebleLevelChannel.close()
+        stereoWideningChannel.close()
+        dialogueEnhancerAmountChannel.close()
         viewModelScope.coroutineContext.cancelChildren()
         audioOutputStateJob?.cancel()
         audioOutputStateJob = null
         profileChangeJob?.cancel()
         profileChangeJob = null
-        repository.close()
+        deviceProfileChangeJob?.cancel()
+        deviceProfileChangeJob = null
         super.onCleared()
     }
     

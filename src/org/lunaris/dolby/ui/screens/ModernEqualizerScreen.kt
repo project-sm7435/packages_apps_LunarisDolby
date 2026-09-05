@@ -1237,22 +1237,81 @@ private fun AutoEqSelectionDialog(
     val searchQuery by viewModel.searchQuery.collectAsState()
     val filteredList by viewModel.filteredAutoEqList.collectAsState()
     val isLoading by viewModel.isSearchLoading.collectAsState()
+    val isSyncing by viewModel.isAutoEqSyncing.collectAsState()
+    val autoEqStatusMessage by viewModel.autoEqStatusMessage.collectAsState()
+    val autoEqProgress by viewModel.autoEqProgress.collectAsState()
+    val autoEqProfileCount by viewModel.autoEqProfileCount.collectAsState()
     val activeAutoEqId by viewModel.currentAppliedAutoEqId.collectAsState()
     val listState = rememberLazyListState()
 
     AlertDialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = { if (!isSyncing) onDismiss() },
         title = {
-            Text(
-                text = stringResource(id = R.string.dolby_autoeq_title),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = stringResource(id = R.string.dolby_autoeq_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f)
+                )
+                IconButton(
+                    onClick = { viewModel.syncAutoEq(context) },
+                    enabled = !isSyncing
+                ) {
+                    if (isSyncing) {
+                        CircularProgressIndicator(modifier = Modifier.size(22.dp), strokeWidth = 2.dp)
+                    } else {
+                        Icon(
+                            Icons.Default.Sync,
+                            contentDescription = stringResource(R.string.dolby_autoeq_sync),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            }
         },
         text = {
             Column(modifier = Modifier.fillMaxWidth().heightIn(max = 500.dp)) {
                 
+                val isActionExecuting = isSyncing || autoEqProgress != null
+                AnimatedVisibility(
+                    visible = isActionExecuting,
+                    enter = fadeIn() + expandVertically(),
+                    exit = fadeOut() + shrinkVertically()
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 12.dp)
+                    ) {
+                        if (!autoEqStatusMessage.isNullOrBlank()) {
+                            Text(
+                                text = autoEqStatusMessage.orEmpty(),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (autoEqStatusMessage.orEmpty().contains("failed", ignoreCase = true) ||
+                                    autoEqStatusMessage.orEmpty().contains("missing", ignoreCase = true) ||
+                                    autoEqStatusMessage.orEmpty().contains("invalid", ignoreCase = true))
+                                    MaterialTheme.colorScheme.error
+                                else MaterialTheme.colorScheme.primary,
+                                maxLines = 2,
+                                modifier = Modifier.padding(bottom = 6.dp)
+                            )
+                        }
+
+                        autoEqProgress?.let { progress ->
+                            LinearProgressIndicator(
+                                progress = { progress.coerceIn(0f, 1f) },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+                }
+
                 Surface(
                     modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
                     shape = MaterialTheme.shapes.extraLarge,
@@ -1261,6 +1320,7 @@ private fun AutoEqSelectionDialog(
                     TextField(
                         value = searchQuery,
                         onValueChange = { viewModel.updateSearchQuery(it) },
+                        enabled = !isLoading && !isSyncing,
                         placeholder = { Text(stringResource(R.string.dolby_autoeq_search_hint)) },
                         trailingIcon = {
                             if (searchQuery.isNotEmpty()) {
@@ -1309,8 +1369,21 @@ private fun AutoEqSelectionDialog(
                 }
 
                 if (isLoading && filteredList.isEmpty()) {
-                    Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) { 
-                        CircularProgressIndicator() 
+                    Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                } else if (filteredList.isEmpty()) {
+                    Box(
+                        Modifier.fillMaxWidth().weight(1f),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = if (searchQuery.isBlank())
+                                stringResource(R.string.dolby_autoeq_no_profiles)
+                            else
+                                stringResource(R.string.dolby_autoeq_no_matches),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 } else {
                     LazyColumn(
@@ -1323,7 +1396,7 @@ private fun AutoEqSelectionDialog(
 
                             Surface(
                                 onClick = {
-                                    viewModel.applyAutoEqProfileNetwork(context, entry)
+                                    viewModel.applyAutoEqProfileLocal(context, entry)
                                     onDismiss()
                                 },
                                 modifier = Modifier.fillMaxWidth(),

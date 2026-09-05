@@ -424,16 +424,19 @@ fun ModernSettingSlider(
     valueRange: ClosedFloatingPointRange<Float>,
     steps: Int,
     modifier: Modifier = Modifier,
+    onValueChangeFinished: (() -> Unit)? = null,
     valueLabel: (Int) -> String = { it.toString() }
 ) {
     val haptic = rememberHapticFeedback()
     val scope = rememberCoroutineScope()
-    var sliderValue by remember(value) { mutableFloatStateOf(value.toFloat()) }
-    var lastHapticValue by remember { mutableIntStateOf(value) }
+    var sliderValue by remember { mutableFloatStateOf(value.toFloat()) }
+    var lastEmittedValue by remember { mutableIntStateOf(value) }
 
     LaunchedEffect(value) {
-        sliderValue = value.toFloat()
-        lastHapticValue = value
+        if (value != sliderValue.toInt()) {
+            sliderValue = value.toFloat()
+            lastEmittedValue = value
+        }
     }
 
     val displayValue = sliderValue.toInt()
@@ -470,16 +473,17 @@ fun ModernSettingSlider(
         Slider(
             value = sliderValue,
             onValueChange = { newValue ->
+                sliderValue = newValue
                 val intValue = newValue.toInt()
-                if (intValue != lastHapticValue) {
+                if (intValue != lastEmittedValue) {
+                    lastEmittedValue = intValue
                     scope.launch {
                         haptic.performHaptic(HapticFeedbackHelper.HapticIntensity.TEXTURE_TICK)
                     }
-                    lastHapticValue = intValue
+                    onValueChange(newValue)
                 }
-                sliderValue = newValue
-                onValueChange(newValue)
             },
+            onValueChangeFinished = onValueChangeFinished,
             valueRange = valueRange,
             steps = steps,
             modifier = Modifier.fillMaxWidth(),

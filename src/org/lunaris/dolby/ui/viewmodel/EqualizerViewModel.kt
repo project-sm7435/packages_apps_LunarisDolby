@@ -16,14 +16,16 @@ import org.lunaris.dolby.data.DolbyRepository
 import org.lunaris.dolby.data.autoeq.*
 import org.lunaris.dolby.domain.models.*
 import org.lunaris.dolby.utils.ToastHelper
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.cancelChildren
 
 class EqualizerViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val repository = DolbyRepository(application)
+    private val repository = DolbyRepository.getInstance(application)
     private val context = application
     
     private val prefs: SharedPreferences = application.getSharedPreferences("autoeq_prefs", Context.MODE_PRIVATE)
@@ -34,6 +36,7 @@ class EqualizerViewModel(application: Application) : AndroidViewModel(applicatio
     private var currentProfile = 0
     private var currentBandMode = BandMode.TEN_BAND
     private var profileChangeJob: Job? = null
+    private var deviceProfileChangeJob: Job? = null
     private var isCleared = false
 
     private lateinit var autoEqRepository: AutoEqRepository
@@ -47,18 +50,33 @@ class EqualizerViewModel(application: Application) : AndroidViewModel(applicatio
     private val _isSearchLoading = MutableStateFlow(false)
     val isSearchLoading = _isSearchLoading.asStateFlow()
 
+    private val _autoEqGeneration = MutableStateFlow(0)
+
+    private val _isAutoEqSyncing = MutableStateFlow(false)
+    val isAutoEqSyncing = _isAutoEqSyncing.asStateFlow()
+
+    private val _autoEqStatusMessage = MutableStateFlow<String?>(null)
+    val autoEqStatusMessage = _autoEqStatusMessage.asStateFlow()
+
+    private val _autoEqProgress = MutableStateFlow<Float?>(null)
+    val autoEqProgress = _autoEqProgress.asStateFlow()
+
+    private val _autoEqProfileCount = MutableStateFlow(0)
+    val autoEqProfileCount = _autoEqProfileCount.asStateFlow()
+
     @OptIn(kotlinx.coroutines.FlowPreview::class)
-    val filteredAutoEqList: StateFlow<List<IndexEntry>> = _searchQuery
-        .debounce(250L)
-        .map { query -> 
-            if (::autoEqRepository.isInitialized) autoEqRepository.search(query) else emptyList()
-        }
-        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+    val filteredAutoEqList: StateFlow<List<IndexEntry>> = combine(
+        _searchQuery.debounce(250L),
+        _autoEqGeneration
+    ) { query, _ ->
+        if (::autoEqRepository.isInitialized) autoEqRepository.search(query) else emptyList()
+    }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     init {
         DolbyConstants.dlog(TAG, "ViewModel initialized")
         loadEqualizer()
         observeProfileChanges()
+        observeDeviceProfileChanges()
     }
     
     private fun observeProfileChanges() {
@@ -73,43 +91,59 @@ class EqualizerViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
+    private fun observeDeviceProfileChanges() {
+        deviceProfileChangeJob?.cancel()
+        deviceProfileChangeJob = viewModelScope.launch {
+            repository.deviceProfileChanged.collect {
+                if (!isCleared) {
+                    DolbyConstants.dlog(TAG, "Device profile changed, reloading equalizer")
+                    loadEqualizer()
+                }
+            }
+        }
+    }
+
     fun loadEqualizer() {
         if (isCleared) return
         
         viewModelScope.launch {
             try {
-                currentProfile = repository.getCurrentProfile()
-                currentBandMode = repository.getBandMode()
-                val bandGains = repository.getEqualizerGains(currentProfile, currentBandMode)
-                
-                val builtInPresets = getBuiltInPresets(currentBandMode)
-                val userPresets = repository.getUserPresets()
-                val allPresets = userPresets + builtInPresets
-                
-                val currentPresetName = repository.getPresetName(currentProfile)
-                
-                if (currentPresetName.contains("AutoEQ", ignoreCase = true)) {
-                    _currentAppliedAutoEqId.value = prefs.getString("last_applied_id", "") ?: ""
-                } else {
-                    _currentAppliedAutoEqId.value = ""
-                    prefs.edit().putString("last_applied_id", "").commit()
-                }
-                
-                val currentPreset = allPresets.find { it.name == currentPresetName }
-                    ?: EqualizerPreset(
-                        name = context.getString(R.string.dolby_preset_custom),
-                        bandGains = bandGains,
-                        isCustom = true,
-                        bandMode = currentBandMode
-                    )
-                
-                if (!isCleared) {
-                    _uiState.value = EqualizerUiState.Success(
+                val successState = withContext(Dispatchers.IO) {
+                    currentProfile = repository.getCurrentProfile()
+                    currentBandMode = repository.getBandMode()
+                    val bandGains = repository.getEqualizerGains(currentProfile, currentBandMode)
+                    
+                    val builtInPresets = getBuiltInPresets(currentBandMode)
+                    val userPresets = repository.getUserPresets()
+                    val allPresets = userPresets + builtInPresets
+                    
+                    val currentPresetName = repository.getPresetName(currentProfile)
+                    
+                    if (currentPresetName.contains("AutoEQ", ignoreCase = true)) {
+                        _currentAppliedAutoEqId.value = prefs.getString("last_applied_id", "") ?: ""
+                    } else {
+                        _currentAppliedAutoEqId.value = ""
+                        prefs.edit().putString("last_applied_id", "").apply()
+                    }
+                    
+                    val currentPreset = allPresets.find { it.name == currentPresetName }
+                        ?: EqualizerPreset(
+                            name = context.getString(R.string.dolby_preset_custom),
+                            bandGains = bandGains,
+                            isCustom = true,
+                            bandMode = currentBandMode
+                        )
+                    
+                    EqualizerUiState.Success(
                         presets = allPresets,
                         currentPreset = currentPreset,
                         bandGains = bandGains,
                         bandMode = currentBandMode
                     )
+                }
+                
+                if (!isCleared) {
+                    _uiState.value = successState
                 }
             } catch (e: Exception) {
                 if (!isCleared) _uiState.value = EqualizerUiState.Error(e.message ?: "Unknown error")
@@ -123,9 +157,60 @@ class EqualizerViewModel(application: Application) : AndroidViewModel(applicatio
         }
         viewModelScope.launch {
             _isSearchLoading.value = true
-            autoEqRepository.initialize()
-            _searchQuery.value = _searchQuery.value
-            _isSearchLoading.value = false
+            _autoEqStatusMessage.value = null
+            try {
+                autoEqRepository.initializeOffline { progress ->
+                    _autoEqStatusMessage.value = progress.stage
+                    _autoEqProgress.value = progress.percent / 100f
+                }
+                _autoEqProfileCount.value = autoEqRepository.getLocalProfileCount()
+                _autoEqGeneration.update { it + 1 }
+            } catch (e: Exception) {
+                val message = e.message ?: "Unable to initialize the bundled AutoEQ database"
+                ToastHelper.showToast(ctx, "AutoEQ initialization failed: $message")
+                DolbyConstants.dlog(TAG, "AutoEQ initialization failed: ${e.message ?: e::class.java.simpleName}")
+            } finally {
+                _isSearchLoading.value = false
+                _autoEqStatusMessage.value = null
+                _autoEqProgress.value = null
+            }
+        }
+    }
+
+    fun syncAutoEq(ctx: Context) {
+        if (!::autoEqRepository.isInitialized) {
+            autoEqRepository = AutoEqRepository(ctx.applicationContext)
+        }
+        if (_isAutoEqSyncing.value) return
+
+        viewModelScope.launch {
+            _isAutoEqSyncing.value = true
+            _autoEqProgress.value = 0f
+            _autoEqStatusMessage.value = "Checking AutoEQ server…"
+            try {
+                when (val result = autoEqRepository.sync { progress ->
+                    _autoEqStatusMessage.value = progress.stage
+                    _autoEqProgress.value = progress.percent / 100f
+                }) {
+                    is AutoEqSyncResult.UpToDate -> {
+                        _autoEqProfileCount.value = result.profileCount
+                        ToastHelper.showToast(ctx, "AutoEQ is already up to date")
+                    }
+                    is AutoEqSyncResult.Updated -> {
+                        _autoEqProfileCount.value = result.profileCount
+                        _autoEqGeneration.update { it + 1 }
+                        ToastHelper.showToast(ctx, "AutoEQ database updated (${result.profileCount} profiles)")
+                    }
+                }
+            } catch (e: Exception) {
+                val message = e.message ?: "AutoEQ sync failed"
+                ToastHelper.showToast(ctx, "AutoEQ sync failed: $message")
+                DolbyConstants.dlog(TAG, "AutoEQ sync failed: $message")
+            } finally {
+                _isAutoEqSyncing.value = false
+                _autoEqStatusMessage.value = null
+                _autoEqProgress.value = null
+            }
         }
     }
 
@@ -133,34 +218,37 @@ class EqualizerViewModel(application: Application) : AndroidViewModel(applicatio
         _searchQuery.value = query
     }
 
-    fun applyAutoEqProfileNetwork(ctx: Context, entry: IndexEntry) {
+    fun applyAutoEqProfileLocal(ctx: Context, entry: IndexEntry) {
         viewModelScope.launch {
             _isSearchLoading.value = true
-            val profile = autoEqRepository.getProfile(entry.id)
-            
-            if (profile != null) {
+            try {
+                val profile = autoEqRepository.getProfile(entry.id)
+                    ?: throw IllegalStateException("Profile data is missing from the local AutoEQ database")
+
                 prefs.edit().putString("last_applied_id", entry.id).commit()
                 _currentAppliedAutoEqId.value = entry.id
-                
                 applyAutoEqProfile(profile.name, profile.graphicEq)
-            } else {
-                ToastHelper.showToast(ctx, "Failed to download profile for ${entry.name}")
+            } catch (e: Exception) {
+                val message = e.message ?: "Failed to load AutoEQ profile"
+                ToastHelper.showToast(ctx, message)
+                DolbyConstants.dlog(TAG, "Failed to load local AutoEQ profile ${entry.id}: $message")
+            } finally {
+                _isSearchLoading.value = false
             }
-            _isSearchLoading.value = false
         }
     }
 
-    fun applyAutoEqProfile(headphoneName: String, autoEqString: String) {
+    private suspend fun applyAutoEqProfile(headphoneName: String, autoEqString: String) {
         val state = _uiState.value
-        if (state !is EqualizerUiState.Success) return
+        if (state !is EqualizerUiState.Success) {
+            throw IllegalStateException("Equalizer is not ready")
+        }
 
-        viewModelScope.launch {
-            try {
-                val parsedAutoEq = parseAutoEqString(autoEqString)
-                if (parsedAutoEq.isEmpty()) {
-                    DolbyConstants.dlog(TAG, "Failed to parse AutoEQ string")
-                    return@launch
-                }
+        try {
+            val parsedAutoEq = parseAutoEqString(autoEqString)
+            if (parsedAutoEq.isEmpty()) {
+                throw IllegalArgumentException("AutoEQ profile contains no valid GraphicEQ data")
+            }
 
                 val targetFreqs = when (currentBandMode) {
                     BandMode.TEN_BAND -> DolbyRepository.BAND_FREQUENCIES_10
@@ -182,11 +270,11 @@ class EqualizerViewModel(application: Application) : AndroidViewModel(applicatio
                 repository.addUserPreset(presetName, newBandGains, currentBandMode)
                 repository.setEqualizerGains(currentProfile, newBandGains, currentBandMode)
                 
-                ToastHelper.showToast(context, context.getString(R.string.dolby_autoeq_applied, headphoneName))
-                loadEqualizer()
-            } catch (e: Exception) {
-                DolbyConstants.dlog(TAG, "Error applying AutoEQ profile: ${e.message}")
-            }
+            ToastHelper.showToast(context, context.getString(R.string.dolby_autoeq_applied, headphoneName))
+            loadEqualizer()
+        } catch (e: Exception) {
+            DolbyConstants.dlog(TAG, "Error applying AutoEQ profile: ${e.message}")
+            throw e
         }
     }
     
@@ -364,24 +452,38 @@ class EqualizerViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun setBandGain(index: Int, gain: Int) {
-        viewModelScope.launch {
+        val state = _uiState.value
+        if (state !is EqualizerUiState.Success) return
+
+        val isFlatPreset = state.currentPreset.name == context.getString(R.string.dolby_preset_default)
+        if (!isFlatPreset && state.currentPreset.bandMode != currentBandMode) {
+            ToastHelper.showToast(
+                context,
+                "Cannot edit ${state.currentPreset.bandMode.displayName} preset in ${currentBandMode.displayName} mode. " +
+                "Switch to ${state.currentPreset.bandMode.displayName} or select a different preset."
+            )
+            return
+        }
+
+        if (state.bandGains.getOrNull(index)?.gain == gain) return
+
+        val newBandGains = state.bandGains.toMutableList()
+        newBandGains[index] = newBandGains[index].copy(gain = gain)
+        val customPreset = EqualizerPreset(
+            name = context.getString(R.string.dolby_preset_custom),
+            bandGains = newBandGains,
+            isCustom = true,
+            bandMode = currentBandMode
+        )
+
+        _uiState.value = state.copy(
+            bandGains = newBandGains,
+            currentPreset = customPreset
+        )
+
+        viewModelScope.launch(Dispatchers.Default) {
             try {
-                val state = _uiState.value
-                if (state is EqualizerUiState.Success) {
-                    val isFlatPreset = state.currentPreset.name == context.getString(R.string.dolby_preset_default)
-                    if (!isFlatPreset && state.currentPreset.bandMode != currentBandMode) {
-                        ToastHelper.showToast(
-                            context,
-                            "Cannot edit ${state.currentPreset.bandMode.displayName} preset in ${currentBandMode.displayName} mode. " +
-                            "Switch to ${state.currentPreset.bandMode.displayName} or select a different preset."
-                        )
-                        return@launch
-                    }
-                    val newBandGains = state.bandGains.toMutableList()
-                    newBandGains[index] = newBandGains[index].copy(gain = gain)
-                    repository.setEqualizerGains(currentProfile, newBandGains, currentBandMode)
-                    loadEqualizer()
-                }
+                repository.setEqualizerGains(currentProfile, newBandGains, currentBandMode)
             } catch (e: Exception) {
                 DolbyConstants.dlog(TAG, "Error setting band gain: ${e.message}")
             }
@@ -467,10 +569,12 @@ class EqualizerViewModel(application: Application) : AndroidViewModel(applicatio
 
     override fun onCleared() {
         isCleared = true
+        repository.flushPendingDeviceProfile()
         viewModelScope.coroutineContext.cancelChildren()
         profileChangeJob?.cancel()
         profileChangeJob = null
-        repository.close()
+        deviceProfileChangeJob?.cancel()
+        deviceProfileChangeJob = null
         super.onCleared()
     }
     
