@@ -160,7 +160,7 @@ fun PresetImportExportScreen(
                     Text(
                         stringResource(R.string.import_export_presets),
                         style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
                     ) 
                 },
@@ -227,7 +227,7 @@ fun PresetImportExportScreen(
                                         Text(
                                             stringResource(R.string.import_presets),
                                             style = MaterialTheme.typography.titleLarge,
-                                            fontWeight = FontWeight.Bold,
+                                            fontWeight = FontWeight.SemiBold,
                                             color = MaterialTheme.colorScheme.onSurface
                                         )
                                     }
@@ -317,7 +317,7 @@ fun PresetImportExportScreen(
                             Text(
                                 stringResource(R.string.your_custom_presets),
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
+                                fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.padding(vertical = 8.dp)
                             )
@@ -373,7 +373,7 @@ fun PresetImportExportScreen(
                             )
                         }
                         item {
-                            Spacer(Modifier.height(80.dp))
+                            Spacer(Modifier.height(70.dp))
                         }
                     }
                 }

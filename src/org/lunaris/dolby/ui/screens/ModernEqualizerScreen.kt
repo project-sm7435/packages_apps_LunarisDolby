@@ -7,7 +7,6 @@ package org.lunaris.dolby.ui.screens
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -36,7 +35,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -68,10 +66,6 @@ fun ModernEqualizerScreen(
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showResetDialog by remember { mutableStateOf(false) }
     var viewMode by remember { mutableStateOf(EqualizerViewMode.CURVE) }
-    val currentRoute by navController.currentBackStackEntryFlow.collectAsState(null)
-    
-    val layoutDirection = LocalLayoutDirection.current
-    val cutoutInsets = WindowInsets.displayCutout.asPaddingValues()
 
     Scaffold(
         topBar = {
@@ -80,7 +74,7 @@ fun ModernEqualizerScreen(
                     Text(
                         stringResource(R.string.dolby_preset),
                         style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
                     ) 
                 },
@@ -231,6 +225,7 @@ fun ModernEqualizerScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ModernEqualizerContent(
     state: EqualizerUiState.Success,
@@ -296,7 +291,7 @@ private fun ModernEqualizerContent(
                         Text(
                             text = stringResource(R.string.band_mode_mismatch),
                             style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onErrorContainer
                         )
                         Spacer(modifier = Modifier.height(4.dp))
@@ -319,24 +314,11 @@ private fun ModernEqualizerContent(
             )
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
+                EqualizerSectionHeader(
+                    icon = Icons.Default.Visibility,
+                    title = "Equalizer View",
                     modifier = Modifier.padding(bottom = 12.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Visibility,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Equalizer View",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
+                )
                 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -361,11 +343,12 @@ private fun ModernEqualizerContent(
             }
         }
 
+        val viewTransitionSpec = MaterialTheme.motionScheme.defaultEffectsSpec<Float>()
         AnimatedContent(
             targetState = viewMode,
             transitionSpec = {
-                fadeIn(animationSpec = tween(300)) togetherWith
-                fadeOut(animationSpec = tween(300))
+                fadeIn(animationSpec = viewTransitionSpec) togetherWith
+                fadeOut(animationSpec = viewTransitionSpec)
             },
             label = "equalizer_view_transition"
         ) { mode ->
@@ -445,7 +428,7 @@ private fun CurveViewContent(
                     Text(
                         text = "${state.bandMode.bandCount} bands",
                         style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.SemiBold,
                         color = if (canEdit) MaterialTheme.colorScheme.onSecondaryContainer
                               else MaterialTheme.colorScheme.onErrorContainer,
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
@@ -454,7 +437,7 @@ private fun CurveViewContent(
             }
             Text(
                 text = if (canEdit) 
-                    "Drag the control points to adjust gain (±15 dB) • ${getFrequencyRange(state.bandMode)}"
+                    "Drag the control points to adjust gain (±15 dB) • ${getFrequencyRange(state.bandGains)}"
                 else
                     "Read-only view • Band mode mismatch",
                 style = MaterialTheme.typography.bodySmall,
@@ -512,7 +495,7 @@ private fun SlidersViewContent(
                         color = MaterialTheme.colorScheme.secondaryContainer
                     ) {
                         Text(
-                            text = getFrequencyRange(state.bandMode),
+                            text = getFrequencyRange(state.bandGains),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -577,7 +560,7 @@ private fun SlidersViewContent(
                                 Text(
                                     text = stringResource(R.string.locked),
                                     style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.Bold,
+                                    fontWeight = FontWeight.SemiBold,
                                     color = MaterialTheme.colorScheme.onErrorContainer
                                 )
                             }
@@ -610,6 +593,34 @@ private fun SlidersViewContent(
 }
 
 @Composable
+private fun EqualizerSectionHeader(
+    icon: ImageVector,
+    title: String,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier.size(20.dp),
+            tint = MaterialTheme.colorScheme.primary
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = if (enabled) MaterialTheme.colorScheme.onSurface
+                   else MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
 private fun BandTunerCard(
     bandGains: List<BandGain>,
     bandMode: BandMode,
@@ -636,25 +647,12 @@ private fun BandTunerCard(
         )
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
+            EqualizerSectionHeader(
+                icon = Icons.Default.GraphicEq,
+                title = stringResource(R.string.band_tuner),
+                enabled = enabled,
                 modifier = Modifier.padding(bottom = 4.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.GraphicEq,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = stringResource(R.string.band_tuner),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = if (enabled) MaterialTheme.colorScheme.onSurface
-                           else MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+            )
 
             Text(
                 text = stringResource(R.string.band_tuner_desc),
@@ -887,13 +885,10 @@ private fun formatGain(gain: Float): String {
     return if (rounded > 0f) "+%.1f dB".format(rounded) else "%.1f dB".format(rounded + 0f)
 }
 
-@Composable
-private fun getFrequencyRange(bandMode: BandMode): String {
-    return when (bandMode) {
-        BandMode.TEN_BAND -> "32Hz - 19.7kHz"
-        BandMode.FIFTEEN_BAND -> "32Hz - 19.7kHz"
-        BandMode.TWENTY_BAND -> "32Hz - 19.7kHz"
-    }
+private fun getFrequencyRange(bandGains: List<BandGain>): String {
+    if (bandGains.isEmpty()) return ""
+    return "${formatFrequency(bandGains.minOf { it.frequency })} - " +
+        formatFrequency(bandGains.maxOf { it.frequency })
 }
 
 @Composable
@@ -929,10 +924,7 @@ private fun ViewModeTile(
             MaterialTheme.shapes.extraLarge
         else
             MaterialTheme.shapes.large,
-        border = if (isSelected)
-            BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
-        else
-            BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+        border = tileSelectionBorder(isSelected)
     ) {
         Row(
             modifier = Modifier
@@ -970,7 +962,7 @@ private fun ViewModeTile(
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyLarge,
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
                 color = if (isSelected)
                     MaterialTheme.colorScheme.onPrimaryContainer
                 else
@@ -997,24 +989,11 @@ private fun BandModeSelector(
         )
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
+            EqualizerSectionHeader(
+                icon = Icons.Default.Tune,
+                title = stringResource(R.string.band_configuration),
                 modifier = Modifier.padding(bottom = 12.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Tune,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = stringResource(R.string.band_configuration),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
+            )
             
             Text(
                 text = stringResource(R.string.choose_equalizer_precision),
@@ -1077,10 +1056,7 @@ private fun BandModeTile(
             MaterialTheme.shapes.extraLarge
         else
             MaterialTheme.shapes.large,
-        border = if (isSelected)
-            BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
-        else
-            BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+        border = tileSelectionBorder(isSelected)
     ) {
         Column(
             modifier = Modifier
@@ -1104,7 +1080,7 @@ private fun BandModeTile(
                     Text(
                         text = mode.value,
                         style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.SemiBold,
                         color = if (isSelected)
                             MaterialTheme.colorScheme.onPrimary
                         else
@@ -1118,7 +1094,7 @@ private fun BandModeTile(
             Text(
                 text = mode.displayName,
                 style = MaterialTheme.typography.labelSmall,
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
                 color = if (isSelected)
                     MaterialTheme.colorScheme.onPrimaryContainer
                 else
@@ -1142,24 +1118,11 @@ fun ModernPresetSelector(
     val scope = rememberCoroutineScope()
 
     Column(modifier = modifier.padding(20.dp)) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
+        EqualizerSectionHeader(
+            icon = Icons.Default.LibraryMusic,
+            title = stringResource(R.string.dolby_geq_preset),
             modifier = Modifier.padding(bottom = 12.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.LibraryMusic,
-                contentDescription = null,
-                modifier = Modifier.size(20.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = stringResource(R.string.dolby_geq_preset),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        }
+        )
         
         ExposedDropdownMenuBox(
             expanded = expanded,
@@ -1462,7 +1425,7 @@ private fun SavePresetDialog(
             Text(
                 stringResource(R.string.dolby_geq_new_preset),
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface
             ) 
         },
@@ -1568,7 +1531,7 @@ private fun AutoEqSelectionDialog(
             Text(
                 text = stringResource(id = R.string.dolby_autoeq_title),
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface
             )
         },
@@ -1622,7 +1585,7 @@ private fun AutoEqSelectionDialog(
                         ) {
                             Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text(text = activeEntry.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                    Text(text = activeEntry.name, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onPrimaryContainer)
                                     Text(text = "${activeEntry.source} • ${activeEntry.measurementRig}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer)
                                 }
                                 Icon(Icons.Default.CheckCircle, contentDescription = stringResource(R.string.dolby_autoeq_active), tint = MaterialTheme.colorScheme.onPrimaryContainer)
@@ -1663,7 +1626,7 @@ private fun AutoEqSelectionDialog(
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(
                                             text = entry.name,
-                                            fontWeight = FontWeight.Bold,
+                                            fontWeight = FontWeight.SemiBold,
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = if (isSelected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurface
                                         )

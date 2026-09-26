@@ -7,6 +7,7 @@
 
     <!-- Dolby Atmos -->
     <string name="dolby_title">دالبی اتموس</string>
+    <string name="dolby_summary">از صدای فراگیر لذت ببرید</string>
     <string name="dolby_enable">استفاده از دالبی اتموس</string>
     <string name="dolby_profile_title">یک پروفایل انتخاب کنید</string>
     <string name="dolby_preset">اکولایزر</string>
@@ -46,7 +47,6 @@
     <string name="dolby_hp_virtualizer_dolby_strength">قدرت شبیه‌ساز صدای فراگیر</string>
     <string name="dolby_dialogue_enhancer_dolby_strength">قدرت تقویت‌کننده دیالوگ</string>
     <string name="dolby_notification_listener_label">سرویس دالبی اتموس</string>
-    <string name="loading">در حال بارگذاری...</string>
 
     <!-- Dolby profiles -->
     <string name="dolby_profile_dynamic">پویا</string>
@@ -80,11 +80,11 @@
     <string name="dolby_preset_rb">آر‌اند‌بی</string>
     <string name="dolby_preset_vocal">تقویت صدای خواننده</string>
     <string name="dolby_preset_custom">سفارشی</string>
+
+    <!-- Dolby equalizer UI -->
     <string name="equalizer">اکولایزر</string>
     <string name="advanced">پیشرفته</string>
     <string name="home">خانه</string>
-
-    <!-- Dolby equalizer UI -->
     <string name="dolby_geq_slider_label_gain">افزایش</string>
     <string name="dolby_geq_preset">پیش‌تنظیم</string>
     <string name="dolby_geq_preset_name">نام پیش‌تنظیم</string>
@@ -154,7 +154,7 @@
     <string name="open_settings">باز کردن تنظیمات</string>
     <string name="cancel">لغو</string>
 
-    <!--import export -->
+    <!-- import export -->
     <string name="import_export_presets">درون‌ریزی/برون‌بری پیش‌تنظیم‌ها</string>
     <string name="import_presets">درون‌ریزی پیش‌تنظیم‌ها</string>
     <string name="import_presets_description">درون‌ریزی پیش‌تنظیم‌ها از فایل‌ها یا کلیپ‌بورد</string>

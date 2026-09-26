@@ -81,7 +81,7 @@ fun AppProfileSettingsCard(
                 Text(
                     text = stringResource(R.string.app_profiles_title),
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
             }
@@ -396,7 +396,7 @@ fun AppProfileSettingsCard(
                 Text(
                     stringResource(R.string.app_profiles_permission_required),
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
                 ) 
             },

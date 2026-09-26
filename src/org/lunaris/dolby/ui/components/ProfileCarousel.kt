@@ -96,7 +96,7 @@ fun ProfileCarousel(
             Text(
                 text = stringResource(R.string.dolby_profile_title),
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(bottom = 12.dp)
             )
@@ -273,7 +273,7 @@ private fun ProfileCard(
                 Text(
                     text = profile,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.SemiBold,
                     color = palette.content,
                     textAlign = TextAlign.Center
                 )

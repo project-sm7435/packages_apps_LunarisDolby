@@ -29,13 +29,13 @@ private val ExpressiveShapes = Shapes(
 
 private val DolbyTypography = Typography(
     displayLarge = TextStyle(
-        fontWeight = FontWeight.Bold,
+        fontWeight = FontWeight.SemiBold,
         fontSize = 57.sp,
         lineHeight = 64.sp,
         letterSpacing = (-0.25).sp
     ),
     displayMedium = TextStyle(
-        fontWeight = FontWeight.Bold,
+        fontWeight = FontWeight.SemiBold,
         fontSize = 45.sp,
         lineHeight = 52.sp,
         letterSpacing = 0.sp
@@ -47,7 +47,7 @@ private val DolbyTypography = Typography(
         letterSpacing = 0.sp
     ),
     headlineLarge = TextStyle(
-        fontWeight = FontWeight.Bold,
+        fontWeight = FontWeight.SemiBold,
         fontSize = 32.sp,
         lineHeight = 40.sp,
         letterSpacing = 0.sp

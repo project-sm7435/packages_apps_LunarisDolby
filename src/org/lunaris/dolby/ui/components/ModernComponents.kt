@@ -85,27 +85,44 @@ fun Modifier.squishable(
         }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun tileSelectionBorder(selected: Boolean): BorderStroke {
+    val width by animateDpAsState(
+        targetValue = if (selected) 1.1.dp else 0.8.dp,
+        animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec(),
+        label = "tile_border_width"
+    )
+    val color by animateColorAsState(
+        targetValue = (if (selected) MaterialTheme.colorScheme.primary
+                       else MaterialTheme.colorScheme.outlineVariant).copy(alpha = 0.8f),
+        animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec(),
+        label = "tile_border_color"
+    )
+    return BorderStroke(width, color)
+}
+
 @Composable
 fun DolbyLogo(
     modifier: Modifier = Modifier,
     leftColor: Color = MaterialTheme.colorScheme.onPrimaryContainer,
     rightColor: Color = MaterialTheme.colorScheme.primary
 ) {
-    Box(
-        modifier = modifier.aspectRatio(1f),
-        contentAlignment = Alignment.Center
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
             painter = painterResource(R.drawable.ic_dolby_logo_left),
             contentDescription = stringResource(R.string.dolby_title),
             tint = leftColor,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxHeight()
         )
         Icon(
             painter = painterResource(R.drawable.ic_dolby_logo_right),
             contentDescription = null,
             tint = rightColor,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxHeight()
         )
     }
 }
@@ -248,7 +265,7 @@ fun DolbyMainCard(
                         Text(
                             text = stringResource(R.string.dolby_enable),
                             style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(4.dp))
@@ -349,7 +366,7 @@ fun ModernSettingsCard(
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
             }
@@ -473,19 +490,16 @@ fun ModernSettingSlider(
     valueRange: ClosedFloatingPointRange<Float>,
     steps: Int,
     modifier: Modifier = Modifier,
-    onValueChangeFinished: (() -> Unit)? = null,
     valueLabel: (Int) -> String = { it.toString() }
 ) {
     val haptic = rememberHapticFeedback()
     val scope = rememberCoroutineScope()
-    var sliderValue by remember { mutableFloatStateOf(value.toFloat()) }
-    var lastEmittedValue by remember { mutableIntStateOf(value) }
+    var sliderValue by remember(value) { mutableFloatStateOf(value.toFloat()) }
+    var lastHapticValue by remember { mutableIntStateOf(value) }
 
     LaunchedEffect(value) {
-        if (value != sliderValue.toInt()) {
-            sliderValue = value.toFloat()
-            lastEmittedValue = value
-        }
+        sliderValue = value.toFloat()
+        lastHapticValue = value
     }
 
     val displayValue = sliderValue.toInt()
@@ -522,17 +536,16 @@ fun ModernSettingSlider(
         Slider(
             value = sliderValue,
             onValueChange = { newValue ->
-                sliderValue = newValue
                 val intValue = newValue.toInt()
-                if (intValue != lastEmittedValue) {
-                    lastEmittedValue = intValue
+                if (intValue != lastHapticValue) {
                     scope.launch {
                         haptic.performHaptic(HapticFeedbackHelper.HapticIntensity.TEXTURE_TICK)
                     }
-                    onValueChange(newValue)
+                    lastHapticValue = intValue
                 }
+                sliderValue = newValue
+                onValueChange(newValue)
             },
-            onValueChangeFinished = onValueChangeFinished,
             valueRange = valueRange,
             steps = steps,
             modifier = Modifier.fillMaxWidth(),
@@ -753,10 +766,7 @@ private fun IeqTile(
             MaterialTheme.shapes.extraLarge
         else
             MaterialTheme.shapes.large,
-        border = if (isSelected)
-            BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
-        else
-            BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+        border = tileSelectionBorder(isSelected)
     ) {
         Row(
             modifier = Modifier
@@ -794,7 +804,7 @@ private fun IeqTile(
             Text(
                 text = entry,
                 style = MaterialTheme.typography.bodyLarge,
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
                 color = if (isSelected)
                     MaterialTheme.colorScheme.onPrimaryContainer
                 else
@@ -834,7 +844,7 @@ fun ModernConfirmDialog(
             Text(
                 title,
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface
             )
         },

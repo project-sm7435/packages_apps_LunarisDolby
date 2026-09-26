@@ -327,7 +327,7 @@ fun InteractiveFrequencyResponseCurve(
                     text = "${if (gainDb >= 0) "+" else ""}%.1f dB".format(gainDb),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onPrimary,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                 )
             }

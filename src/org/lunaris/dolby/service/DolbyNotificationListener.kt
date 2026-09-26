@@ -23,7 +23,7 @@ class DolbyNotificationListener : NotificationListenerService() {
         super.onCreate()
         DolbyConstants.dlog(TAG, "NotificationListener created")
         appProfileManager = AppProfileManager(this)
-        dolbyRepository = DolbyRepository.getInstance(this)
+        dolbyRepository = DolbyRepository(this)
         initializeDolbySettings()
         startAppProfileMonitoringIfEnabled()
     }

@@ -88,7 +88,7 @@ fun NotificationListenerPermissionCard(
                     Text(
                         text = stringResource(R.string.notification_access_required),
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onErrorContainer
                     )
                 }
@@ -142,7 +142,7 @@ fun NotificationListenerPermissionCard(
                 Text(
                     stringResource(R.string.enable_notification_access),
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
                 ) 
             },
