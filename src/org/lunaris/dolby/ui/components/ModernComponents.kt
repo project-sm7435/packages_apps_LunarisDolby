@@ -5,6 +5,7 @@
 
 package org.lunaris.dolby.ui.components
 
+import android.content.Context
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
@@ -24,6 +25,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
@@ -34,10 +36,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import org.lunaris.dolby.DolbyConstants
 import org.lunaris.dolby.R
 import org.lunaris.dolby.domain.models.ActiveAudioDevice
 import org.lunaris.dolby.domain.models.AudioDeviceCategory
 import org.lunaris.dolby.domain.models.ProfileSettings
+import org.lunaris.dolby.service.AppProfileMonitorService
 import org.lunaris.dolby.ui.viewmodel.DolbyViewModel
 import org.lunaris.dolby.utils.*
 
@@ -198,6 +202,116 @@ fun ActiveAudioDeviceCard(
                     color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
                 )
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun AudioDeviceMemoryCard(
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    val prefs = remember { context.getSharedPreferences("dolby_prefs", Context.MODE_PRIVATE) }
+    var isEnabled by remember {
+        mutableStateOf(prefs.getBoolean(DolbyConstants.PREF_DEVICE_STATE_MEMORY, false))
+    }
+
+    DisposableEffect(Unit) {
+        val listener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            if (key == DolbyConstants.PREF_DEVICE_STATE_MEMORY) {
+                isEnabled = prefs.getBoolean(DolbyConstants.PREF_DEVICE_STATE_MEMORY, false)
+            }
+        }
+        prefs.registerOnSharedPreferenceChangeListener(listener)
+        onDispose {
+            prefs.unregisterOnSharedPreferenceChangeListener(listener)
+        }
+    }
+
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                shape = MaterialTheme.shapes.medium,
+                color = MaterialTheme.colorScheme.primaryContainer
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Memory,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier
+                        .padding(12.dp)
+                        .size(24.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.device_state_memory_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = stringResource(R.string.device_state_memory_summary),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Switch(
+                checked = isEnabled,
+                onCheckedChange = { enabled ->
+                    if (enabled) {
+                        val isAppProfileEnabled = prefs.getBoolean("app_profile_monitoring_enabled", false)
+                        if (isAppProfileEnabled) {
+                            prefs.edit().putBoolean("app_profile_monitoring_enabled", false).apply()
+                            AppProfileMonitorService.stopMonitoring(context)
+                            ToastHelper.showToast(context, context.getString(R.string.device_state_memory_conflict_toast))
+                        }
+                    }
+                    isEnabled = enabled
+                    prefs.edit().putBoolean(DolbyConstants.PREF_DEVICE_STATE_MEMORY, enabled).apply()
+                },
+                thumbContent = {
+                    Crossfade(
+                        targetState = isEnabled,
+                        animationSpec = MaterialTheme.motionScheme.slowEffectsSpec(),
+                        label = "device_memory_switch"
+                    ) { checked ->
+                        if (checked) {
+                            Icon(
+                                imageVector = Icons.Filled.Check,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Filled.Close,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                }
+            )
         }
     }
 }

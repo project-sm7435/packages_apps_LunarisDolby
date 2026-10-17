@@ -182,6 +182,10 @@ private fun ModernDolbySettingsContent(
         }
 
         item {
+            AudioDeviceMemoryCard()
+        }
+
+        item {
             NotificationListenerPermissionCard()
         }
 

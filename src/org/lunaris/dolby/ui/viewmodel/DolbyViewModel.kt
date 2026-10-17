@@ -22,6 +22,13 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = DolbyRepository(application)
 
+    private val prefs = application.getSharedPreferences("dolby_prefs", android.content.Context.MODE_PRIVATE)
+    private val prefChangeListener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, _ ->
+        if (!isCleared) {
+            loadSettings()
+        }
+    }
+
     private val _uiState = MutableStateFlow<DolbyUiState>(DolbyUiState.Loading)
     val uiState: StateFlow<DolbyUiState> = _uiState.asStateFlow()
     val currentProfile: StateFlow<Int> = repository.currentProfile
@@ -32,6 +39,7 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         DolbyConstants.dlog(TAG, "ViewModel initialized")
+        prefs.registerOnSharedPreferenceChangeListener(prefChangeListener)
         loadSettings()
         observeAudioOutputState()
         observeProfileChanges()
@@ -322,6 +330,7 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
         audioOutputStateJob = null
         profileChangeJob?.cancel()
         profileChangeJob = null
+        prefs.unregisterOnSharedPreferenceChangeListener(prefChangeListener)
         repository.close()
         super.onCleared()
     }

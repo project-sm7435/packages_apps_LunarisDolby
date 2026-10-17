@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import org.lunaris.dolby.R
 import org.lunaris.dolby.service.AppProfileMonitorService
 import org.lunaris.dolby.DolbyConstants
+import org.lunaris.dolby.utils.ToastHelper
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -37,9 +38,6 @@ fun AppProfileSettingsCard(
     val prefs = context.getSharedPreferences("dolby_prefs", Context.MODE_PRIVATE)
     var isEnabled by remember { 
         mutableStateOf(prefs.getBoolean("app_profile_monitoring_enabled", false)) 
-    }
-    var isDeviceStateMemoryEnabled by remember {
-        mutableStateOf(prefs.getBoolean(DolbyConstants.PREF_DEVICE_STATE_MEMORY, false))
     }
     var showToasts by remember {
         mutableStateOf(prefs.getBoolean("app_profile_show_toasts", true))
@@ -107,13 +105,13 @@ fun AppProfileSettingsCard(
                 
                 Switch(
                     checked = isEnabled,
-                    enabled = !isDeviceStateMemoryEnabled,
                     onCheckedChange = { enabled ->
                         if (enabled && !hasUsageStatsPermission(context)) {
                             showPermissionDialog = true
                         } else {
-                            if (enabled && isDeviceStateMemoryEnabled) {
-                                return@Switch
+                            if (enabled && prefs.getBoolean(DolbyConstants.PREF_DEVICE_STATE_MEMORY, false)) {
+                                prefs.edit().putBoolean(DolbyConstants.PREF_DEVICE_STATE_MEMORY, false).apply()
+                                ToastHelper.showToast(context, context.getString(R.string.app_profile_conflict_toast))
                             }
                             isEnabled = enabled
                             prefs.edit().putBoolean("app_profile_monitoring_enabled", enabled).apply()
@@ -147,24 +145,6 @@ fun AppProfileSettingsCard(
                         }
                     }
                 )
-            }
-
-            AnimatedVisibility(visible = isDeviceStateMemoryEnabled) {
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 6.dp),
-                    shape = MaterialTheme.shapes.large,
-                    color = MaterialTheme.colorScheme.errorContainer,
-                    contentColor = MaterialTheme.colorScheme.onErrorContainer
-                ) {
-                    Text(
-                        text = stringResource(R.string.device_state_memory_conflict_summary),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onErrorContainer,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
-                    )
-                }
             }
             
             AnimatedVisibility(visible = isEnabled) {
@@ -269,88 +249,6 @@ fun AppProfileSettingsCard(
                 }
             }
             
-            Spacer(modifier = Modifier.height(12.dp))
-
-            HorizontalDivider(
-                modifier = Modifier.padding(vertical = 4.dp),
-                color = MaterialTheme.colorScheme.outlineVariant
-            )
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = stringResource(R.string.device_state_memory_title),
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = if (isEnabled)
-                            stringResource(R.string.app_profile_conflict_summary)
-                        else
-                            stringResource(R.string.device_state_memory_summary),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (isEnabled)
-                            MaterialTheme.colorScheme.error
-                        else
-                            MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 2.dp)
-                    )
-                }
-
-                Spacer(modifier = Modifier.width(12.dp))
-
-                Switch(
-                    checked = isDeviceStateMemoryEnabled,
-                    enabled = !isEnabled,
-                    onCheckedChange = { enabled ->
-                        if (enabled && isEnabled) {
-                            isEnabled = false
-                            prefs.edit()
-                                .putBoolean("app_profile_monitoring_enabled", false)
-                                .apply()
-                            AppProfileMonitorService.stopMonitoring(context)
-                            android.widget.Toast.makeText(
-                                context,
-                                context.getString(R.string.app_profile_conflict_toast),
-                                android.widget.Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                        isDeviceStateMemoryEnabled = enabled
-                        prefs.edit()
-                            .putBoolean(DolbyConstants.PREF_DEVICE_STATE_MEMORY, enabled)
-                            .apply()
-                    },
-                    thumbContent = {
-                        Crossfade(
-                            targetState = isDeviceStateMemoryEnabled,
-                            animationSpec = MaterialTheme.motionScheme.slowEffectsSpec(),
-                            label = "device_memory_switch_icon"
-                        ) { isChecked ->
-                            if (isChecked) {
-                                Icon(
-                                    imageVector = Icons.Filled.Check,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            } else {
-                                Icon(
-                                    imageVector = Icons.Filled.Close,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            }
-                        }
-                    }
-                )
-            }
-
             Spacer(modifier = Modifier.height(12.dp))
             
             Button(

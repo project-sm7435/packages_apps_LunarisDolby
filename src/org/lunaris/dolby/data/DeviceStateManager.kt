@@ -22,13 +22,22 @@ class DeviceStateManager(private val context: Context) {
             AudioDeviceInfo.TYPE_BLE_HEADSET,
             AudioDeviceInfo.TYPE_BLE_SPEAKER,
             AudioDeviceInfo.TYPE_BLE_BROADCAST -> {
-                val addr = device.address?.takeIf { it.isNotBlank() } ?: "unknown"
-                "bt_${addr.replace(":", "_")}"
+                val addr = device.address?.takeIf { it.isNotBlank() }
+                    ?: device.productName?.toString()?.takeIf { it.isNotBlank() }
+                    ?: "unknown"
+                "bt_${addr.replace(":", "_").replace(" ", "_").lowercase()}"
             }
             AudioDeviceInfo.TYPE_WIRED_HEADPHONES,
-            AudioDeviceInfo.TYPE_WIRED_HEADSET,
+            AudioDeviceInfo.TYPE_WIRED_HEADSET -> "wired_headphones"
             AudioDeviceInfo.TYPE_USB_HEADSET,
-            AudioDeviceInfo.TYPE_USB_DEVICE -> "wired_headphones"
+            AudioDeviceInfo.TYPE_USB_DEVICE,
+            AudioDeviceInfo.TYPE_USB_ACCESSORY,
+            AudioDeviceInfo.TYPE_DOCK -> {
+                val id = device.productName?.toString()?.takeIf { it.isNotBlank() }
+                    ?: device.address?.takeIf { it.isNotBlank() }
+                    ?: "dac"
+                "usb_${id.replace(" ", "_").lowercase()}"
+            }
             AudioDeviceInfo.TYPE_BUILTIN_SPEAKER -> "builtin_speaker"
             else -> "device_type_${device.type}"
         }
@@ -41,7 +50,9 @@ class DeviceStateManager(private val context: Context) {
             AudioDeviceInfo.TYPE_WIRED_HEADPHONES,
             AudioDeviceInfo.TYPE_WIRED_HEADSET -> productName ?: "Wired Headphones"
             AudioDeviceInfo.TYPE_USB_HEADSET,
-            AudioDeviceInfo.TYPE_USB_DEVICE -> productName ?: "USB Audio"
+            AudioDeviceInfo.TYPE_USB_DEVICE,
+            AudioDeviceInfo.TYPE_USB_ACCESSORY,
+            AudioDeviceInfo.TYPE_DOCK -> productName ?: "USB Audio"
             AudioDeviceInfo.TYPE_BLUETOOTH_A2DP,
             AudioDeviceInfo.TYPE_BLUETOOTH_SCO,
             AudioDeviceInfo.TYPE_BLE_HEADSET,
@@ -57,42 +68,40 @@ class DeviceStateManager(private val context: Context) {
         val editor = prefs.edit()
 
         editor.putInt(KEY_VERSION, SNAPSHOT_VERSION)
-
         editor.putBoolean(KEY_DOLBY_ENABLED, repository.getDolbyEnabled())
         editor.putInt(KEY_PROFILE, profile)
+        editor.putString(KEY_BAND_MODE, repository.getBandMode().value)
 
-        editor.putInt(KEY_IEQ, repository.getIeqPreset(profile))
+        for (p in SUPPORTED_PROFILES) {
+            val pPrefs = repository.getProfilePrefs(p)
+            editor.putInt("p_${p}_ieq", repository.getIeqPreset(p))
+            editor.putBoolean("p_${p}_hp_virt", repository.getHeadphoneVirtualizerEnabled(p))
+            editor.putBoolean("p_${p}_spk_virt", repository.getSpeakerVirtualizerEnabled(p))
+            editor.putBoolean("p_${p}_dialogue", repository.getDialogueEnhancerEnabled(p))
+            editor.putInt("p_${p}_dialogue_amt", repository.getDialogueEnhancerAmount(p))
+            editor.putBoolean("p_${p}_bass_enabled", repository.getBassEnhancerEnabled(p))
+            editor.putInt("p_${p}_bass_level", repository.getBassLevel(p))
+            editor.putInt("p_${p}_bass_curve", repository.getBassCurve(p))
+            editor.putBoolean("p_${p}_treble_enabled", repository.getTrebleEnhancerEnabled(p))
+            editor.putInt("p_${p}_treble_level", repository.getTrebleLevel(p))
+            editor.putBoolean("p_${p}_mid_enabled", repository.getMidEnhancerEnabled(p))
+            editor.putInt("p_${p}_mid_level", repository.getMidLevel(p))
 
-        editor.putBoolean(KEY_HP_VIRT, repository.getHeadphoneVirtualizerEnabled(profile))
-        editor.putBoolean(KEY_SPK_VIRT, repository.getSpeakerVirtualizerEnabled(profile))
+            if (repository.volumeLevelerSupported) {
+                editor.putBoolean("p_${p}_volume", repository.getVolumeLevelerEnabled(p))
+            }
+            if (repository.stereoWideningSupported) {
+                editor.putInt("p_${p}_stereo", repository.getStereoWideningAmount(p))
+            }
 
-        editor.putBoolean(KEY_DIALOGUE, repository.getDialogueEnhancerEnabled(profile))
-        editor.putInt(KEY_DIALOGUE_AMT, repository.getDialogueEnhancerAmount(profile))
-
-        editor.putBoolean(KEY_BASS_ENABLED, repository.getBassEnhancerEnabled(profile))
-        editor.putInt(KEY_BASS_LEVEL, repository.getBassLevel(profile))
-        editor.putInt(KEY_BASS_CURVE, repository.getBassCurve(profile))
-
-        editor.putBoolean(KEY_TREBLE_ENABLED, repository.getTrebleEnhancerEnabled(profile))
-        editor.putInt(KEY_TREBLE_LEVEL, repository.getTrebleLevel(profile))
-
-        editor.putBoolean(KEY_MID_ENABLED, repository.getMidEnhancerEnabled(profile))
-        editor.putInt(KEY_MID_LEVEL, repository.getMidLevel(profile))
-
-        if (repository.volumeLevelerSupported) {
-            editor.putBoolean(KEY_VOLUME, repository.getVolumeLevelerEnabled(profile))
+            val basePreset = pPrefs.getString(DolbyConstants.PREF_PRESET, null)
+            if (basePreset != null) {
+                editor.putString("p_${p}_eq_gains", basePreset)
+            }
         }
-        if (repository.stereoWideningSupported) {
-            editor.putInt(KEY_STEREO, repository.getStereoWideningAmount(profile))
-        }
-
-        val gains = repository.getEqualizerGains(profile, BandMode.TWENTY_BAND)
-        editor.putInt(KEY_EQ_BAND_COUNT, gains.size)
-        editor.putString(KEY_EQ_GAINS, gains.joinToString(",") { it.gain.toString() })
 
         editor.apply()
-        DolbyConstants.dlog(TAG,
-            "Snapshot saved for device=$deviceKey profile=$profile bands=${gains.size} v=$SNAPSHOT_VERSION")
+        DolbyConstants.dlog(TAG, "Snapshot saved for device=$deviceKey profile=$profile v=$SNAPSHOT_VERSION")
     }
 
     fun restoreSnapshot(deviceKey: String, repository: DolbyRepository): Boolean {
@@ -105,8 +114,7 @@ class DeviceStateManager(private val context: Context) {
 
         val storedVersion = prefs.getInt(KEY_VERSION, -1)
         if (storedVersion != SNAPSHOT_VERSION) {
-            DolbyConstants.dlog(TAG,
-                "Snapshot version mismatch for $deviceKey: stored=$storedVersion current=$SNAPSHOT_VERSION — discarding")
+            DolbyConstants.dlog(TAG, "Snapshot version mismatch for $deviceKey: stored=$storedVersion current=$SNAPSHOT_VERSION")
             clearSnapshot(deviceKey)
             return false
         }
@@ -114,61 +122,58 @@ class DeviceStateManager(private val context: Context) {
         return try {
             val enabled = prefs.getBoolean(KEY_DOLBY_ENABLED, true)
             val profile = prefs.getInt(KEY_PROFILE, 0)
+            val bandModeVal = prefs.getString(KEY_BAND_MODE, BandMode.TEN_BAND.value) ?: BandMode.TEN_BAND.value
+            repository.setBandMode(BandMode.fromValue(bandModeVal))
 
-            repository.setDolbyEnabled(enabled)
-            repository.setCurrentProfile(profile)
+            for (p in SUPPORTED_PROFILES) {
+                if (prefs.contains("p_${p}_ieq")) {
+                    val pPrefs = repository.getProfilePrefs(p).edit()
+                    pPrefs.putString(DolbyConstants.PREF_IEQ, prefs.getInt("p_${p}_ieq", 0).toString())
+                    pPrefs.putBoolean(DolbyConstants.PREF_HP_VIRTUALIZER, prefs.getBoolean("p_${p}_hp_virt", false))
+                    pPrefs.putBoolean(DolbyConstants.PREF_SPK_VIRTUALIZER, prefs.getBoolean("p_${p}_spk_virt", false))
+                    pPrefs.putBoolean(DolbyConstants.PREF_DIALOGUE, prefs.getBoolean("p_${p}_dialogue", false))
+                    pPrefs.putInt(DolbyConstants.PREF_DIALOGUE_AMOUNT, prefs.getInt("p_${p}_dialogue_amt", 6))
+                    pPrefs.putBoolean(DolbyConstants.PREF_BASS, prefs.getBoolean("p_${p}_bass_enabled", false))
+                    pPrefs.putInt(DolbyConstants.PREF_BASS_LEVEL, prefs.getInt("p_${p}_bass_level", 0))
+                    pPrefs.putInt(DolbyConstants.PREF_BASS_CURVE, prefs.getInt("p_${p}_bass_curve", 0))
+                    pPrefs.putBoolean(DolbyConstants.PREF_TREBLE, prefs.getBoolean("p_${p}_treble_enabled", false))
+                    pPrefs.putInt(DolbyConstants.PREF_TREBLE_LEVEL, prefs.getInt("p_${p}_treble_level", 0))
+                    pPrefs.putBoolean(DolbyConstants.PREF_MID, prefs.getBoolean("p_${p}_mid_enabled", false))
+                    pPrefs.putInt(DolbyConstants.PREF_MID_LEVEL, prefs.getInt("p_${p}_mid_level", 0))
 
-            repository.setIeqPreset(profile, prefs.getInt(KEY_IEQ, 0))
-
-            repository.setHeadphoneVirtualizerEnabled(profile, prefs.getBoolean(KEY_HP_VIRT, false))
-            repository.setSpeakerVirtualizerEnabled(profile, prefs.getBoolean(KEY_SPK_VIRT, false))
-
-            repository.setDialogueEnhancerEnabled(profile, prefs.getBoolean(KEY_DIALOGUE, false))
-            repository.setDialogueEnhancerAmount(profile, prefs.getInt(KEY_DIALOGUE_AMT, 6))
-
-            repository.setBassEnhancerEnabled(profile, prefs.getBoolean(KEY_BASS_ENABLED, false))
-            repository.setBassCurve(profile, prefs.getInt(KEY_BASS_CURVE, 0))
-            repository.setBassLevel(profile, prefs.getInt(KEY_BASS_LEVEL, 0))
-
-            repository.setTrebleEnhancerEnabled(profile, prefs.getBoolean(KEY_TREBLE_ENABLED, false))
-            repository.setTrebleLevel(profile, prefs.getInt(KEY_TREBLE_LEVEL, 0))
-
-            repository.setMidEnhancerEnabled(profile, prefs.getBoolean(KEY_MID_ENABLED, false))
-            repository.setMidLevel(profile, prefs.getInt(KEY_MID_LEVEL, 0))
-
-            if (repository.volumeLevelerSupported) {
-                repository.setVolumeLevelerEnabled(profile, prefs.getBoolean(KEY_VOLUME, false))
-            }
-            if (repository.stereoWideningSupported) {
-                repository.setStereoWideningAmount(profile, prefs.getInt(KEY_STEREO, 32))
-            }
-
-            val storedBandCount = prefs.getInt(KEY_EQ_BAND_COUNT, -1)
-            val gainsStr = prefs.getString(KEY_EQ_GAINS, null)
-            if (gainsStr != null && storedBandCount > 0) {
-                val gains = gainsStr.split(",").mapNotNull { it.toIntOrNull() }
-                if (gains.size == storedBandCount) {
-                    val bandGains = gains.mapIndexed { i, g ->
-                        BandGain(
-                            frequency = DolbyRepository.BAND_FREQUENCIES_20.getOrElse(i) { i },
-                            gain = g
-                        )
+                    if (repository.volumeLevelerSupported) {
+                        pPrefs.putBoolean(DolbyConstants.PREF_VOLUME, prefs.getBoolean("p_${p}_volume", false))
                     }
-                    repository.setEqualizerGains(profile, bandGains, BandMode.TWENTY_BAND)
-                } else {
-                    DolbyConstants.dlog(TAG,
-                        "EQ band count mismatch for $deviceKey: stored=$storedBandCount actual=${gains.size} — skipping EQ restore")
+                    if (repository.stereoWideningSupported) {
+                        pPrefs.putInt(DolbyConstants.PREF_STEREO_WIDENING, prefs.getInt("p_${p}_stereo", 32))
+                    }
+
+                    val gainsStr = prefs.getString("p_${p}_eq_gains", null)
+                    if (gainsStr != null) {
+                        pPrefs.putString(DolbyConstants.PREF_PRESET, gainsStr)
+                    }
+                    pPrefs.apply()
                 }
             }
 
-            DolbyConstants.dlog(TAG,
-                "Snapshot restored for device=$deviceKey profile=$profile v=$storedVersion")
+            repository.setDolbyEnabled(enabled)
+            repository.setCurrentProfile(profile)
+            repository.updateEffectiveGains(profile)
+
+            DolbyConstants.dlog(TAG, "Snapshot restored for device=$deviceKey profile=$profile v=$storedVersion")
             true
         } catch (e: Exception) {
-            DolbyConstants.dlog(TAG,
-                "Failed to restore snapshot for $deviceKey: ${e.message} — discarding")
+            DolbyConstants.dlog(TAG, "Failed to restore snapshot for $deviceKey: ${e.message}")
             clearSnapshot(deviceKey)
             false
+        }
+    }
+
+    fun ensureInitialSnapshot(device: AudioDeviceInfo?, repository: DolbyRepository) {
+        val dev = device ?: repository.getCurrentOutputDevice() ?: return
+        val key = deviceKey(dev)
+        if (!hasSnapshot(key)) {
+            saveSnapshot(key, repository)
         }
     }
 
@@ -199,26 +204,13 @@ class DeviceStateManager(private val context: Context) {
     companion object {
         private const val TAG = "DeviceStateManager"
 
-        const val SNAPSHOT_VERSION = 1
+        const val SNAPSHOT_VERSION = 2
+
+        val SUPPORTED_PROFILES = listOf(0, 1, 2, 3, 4, 5, 6)
 
         private const val KEY_VERSION = "snapshot_version"
         private const val KEY_DOLBY_ENABLED = "enabled"
         private const val KEY_PROFILE = "profile"
-        private const val KEY_IEQ = "ieq"
-        private const val KEY_HP_VIRT = "hp_virt"
-        private const val KEY_SPK_VIRT = "spk_virt"
-        private const val KEY_DIALOGUE = "dialogue"
-        private const val KEY_DIALOGUE_AMT  = "dialogue_amt"
-        private const val KEY_BASS_ENABLED = "bass_enabled"
-        private const val KEY_BASS_LEVEL = "bass_level"
-        private const val KEY_BASS_CURVE = "bass_curve"
-        private const val KEY_TREBLE_ENABLED = "treble_enabled"
-        private const val KEY_TREBLE_LEVEL = "treble_level"
-        private const val KEY_MID_ENABLED = "mid_enabled"
-        private const val KEY_MID_LEVEL = "mid_level"
-        private const val KEY_VOLUME = "volume"
-        private const val KEY_STEREO = "stereo"
-        private const val KEY_EQ_BAND_COUNT = "eq_band_count"
-        private const val KEY_EQ_GAINS = "eq_gains"
+        private const val KEY_BAND_MODE = "band_mode"
     }
 }
