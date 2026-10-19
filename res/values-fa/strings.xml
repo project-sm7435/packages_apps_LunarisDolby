@@ -5,6 +5,13 @@
 -->
 <resources>
 
+    <!-- Expressive UI -->
+    <string name="dolby_credits">اعتبارات</string>
+    <string name="dolby_more_options">گزینه‌های بیشتر</string>
+    <string name="dolby_save_preset">ذخیره پیش‌تنظیم</string>
+    <string name="dolby_equalizer_summary">صدای خود را فرکانس به فرکانس شکل دهید</string>
+    <string name="dolby_advanced_summary">جزئیات تجربه شنیداری خود را به‌دقت تنظیم کنید</string>
+
     <!-- Dolby Atmos -->
     <string name="dolby_title">دالبی اتموس</string>
     <string name="dolby_summary">از صدای فراگیر لذت ببرید</string>
@@ -47,9 +54,11 @@
     <string name="dolby_hp_virtualizer_dolby_strength">قدرت شبیه‌ساز صدای فراگیر</string>
     <string name="dolby_dialogue_enhancer_dolby_strength">قدرت تقویت‌کننده دیالوگ</string>
     <string name="dolby_notification_listener_label">سرویس دالبی اتموس</string>
+    <string name="loading">در حال بارگذاری...</string>
 
     <!-- Dolby profiles -->
     <string name="dolby_profile_dynamic">پویا</string>
+    <string name="dolby_profile_dynamic_summary">به‌طور خودکار با صدای شما سازگار می‌شود</string>
     <string name="dolby_profile_video">فیلم/ویدیو</string>
     <string name="dolby_profile_music">موسیقی</string>
     <string name="dolby_profile_game">بازی</string>
@@ -80,11 +89,11 @@
     <string name="dolby_preset_rb">آر‌اند‌بی</string>
     <string name="dolby_preset_vocal">تقویت صدای خواننده</string>
     <string name="dolby_preset_custom">سفارشی</string>
-
-    <!-- Dolby equalizer UI -->
     <string name="equalizer">اکولایزر</string>
     <string name="advanced">پیشرفته</string>
     <string name="home">خانه</string>
+
+    <!-- Dolby equalizer UI -->
     <string name="dolby_geq_slider_label_gain">افزایش</string>
     <string name="dolby_geq_preset">پیش‌تنظیم</string>
     <string name="dolby_geq_preset_name">نام پیش‌تنظیم</string>
@@ -101,12 +110,25 @@
     <string name="locked">قفل شده</string>
     <string name="band_configuration">پیکربندی باند</string>
     <string name="choose_equalizer_precision">دقت اکولایزر را انتخاب کنید: باندهای بیشتر = کنترل دقیق‌تر</string>
+    <string name="band_tuner">تنظیم‌کننده باند</string>
+    <string name="band_tuner_desc">باندها را مرور کنید و افزایش را با گام‌های ۰٫۱ دسی‌بل تنظیم کنید</string>
+    <string name="band_tuner_position">باند %1$d از %2$d</string>
+    <string name="band_tuner_label">باند %1$d · %2$s</string>
+    <string name="band_tuner_previous">باند قبلی</string>
+    <string name="band_tuner_next">باند بعدی</string>
+    <string name="band_tuner_decrement">−۰٫۱ dB</string>
+    <string name="band_tuner_reset">۰ dB</string>
+    <string name="band_tuner_increment">+۰٫۱ dB</string>
 
     <!-- Dolby intelligent EQ -->
     <string name="dolby_ieq">اکولایزر هوشمند</string>
     <string name="dolby_balanced">متعادل</string>
     <string name="dolby_warm">گرم</string>
     <string name="dolby_detailed">دقیق</string>
+    <string name="dolby_ieq_off_summary">از پروفایل فعلی بدون اکولایزر هوشمند استفاده کنید.</string>
+    <string name="dolby_ieq_detailed_summary">جزئیات ظریف و وضوح را برجسته می‌کند.</string>
+    <string name="dolby_ieq_balanced_summary">تعادل بین صدای بم، میانی و زیر را حفظ می‌کند.</string>
+    <string name="dolby_ieq_warm_summary">به صدای شما حالتی نرم‌تر و گرم‌تر می‌دهد.</string>
 
     <!-- Per-App Audio Profiles -->
     <string name="app_profiles_title">پروفایل‌های صوتی هر برنامه</string>
@@ -154,7 +176,7 @@
     <string name="open_settings">باز کردن تنظیمات</string>
     <string name="cancel">لغو</string>
 
-    <!-- import export -->
+    <!--import export -->
     <string name="import_export_presets">درون‌ریزی/برون‌بری پیش‌تنظیم‌ها</string>
     <string name="import_presets">درون‌ریزی پیش‌تنظیم‌ها</string>
     <string name="import_presets_description">درون‌ریزی پیش‌تنظیم‌ها از فایل‌ها یا کلیپ‌بورد</string>

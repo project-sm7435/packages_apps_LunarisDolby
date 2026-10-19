@@ -5,6 +5,13 @@
 -->
 <resources>
 
+    <!-- Expressive UI -->
+    <string name="dolby_credits">Katkıda bulunanlar</string>
+    <string name="dolby_more_options">Diğer seçenekler</string>
+    <string name="dolby_save_preset">Ön ayarı kaydet</string>
+    <string name="dolby_equalizer_summary">Sesinizi frekans frekans şekillendirin</string>
+    <string name="dolby_advanced_summary">Dinleme deneyiminizin ayrıntılarını ince ayarlayın</string>
+
     <!-- Dolby Atmos -->
     <string name="dolby_title">Dolby Atmos</string>
     <string name="dolby_summary">Sürükleyici ses deneyimini yaşayın</string>
@@ -47,9 +54,11 @@
     <string name="dolby_hp_virtualizer_dolby_strength">Çevresel ses gücü</string>
     <string name="dolby_dialogue_enhancer_dolby_strength">Diyalog artırıcı şiddeti</string>
     <string name="dolby_notification_listener_label">Dolby Atmos Servisi</string>
+    <string name="loading">Yükleniyor...</string>
 
     <!-- Dolby profiles -->
     <string name="dolby_profile_dynamic">Dinamik</string>
+    <string name="dolby_profile_dynamic_summary">Sesinize otomatik olarak uyum sağlar</string>
     <string name="dolby_profile_video">Film/Video</string>
     <string name="dolby_profile_music">Müzik</string>
     <string name="dolby_profile_game">Oyun</string>
@@ -80,11 +89,11 @@
     <string name="dolby_preset_rb">R&amp;B</string>
     <string name="dolby_preset_vocal">Vokal ses güçlendirici</string>
     <string name="dolby_preset_custom">Diğer</string>
-
-    <!-- Dolby equalizer UI -->
     <string name="equalizer">Ekolayzer</string>
     <string name="advanced">Gelişmiş</string>
     <string name="home">Ana menü</string>
+
+    <!-- Dolby equalizer UI -->
     <string name="dolby_geq_slider_label_gain">Seviye</string>
     <string name="dolby_geq_preset">Ön ayar</string>
     <string name="dolby_geq_preset_name">Ön ayar ismi</string>
@@ -101,12 +110,25 @@
     <string name="locked">Engellendi</string>
     <string name="band_configuration">Bant sayısı</string>
     <string name="choose_equalizer_precision">Daha fazla bant = daha hassas ekolayzer kontrolü</string>
+    <string name="band_tuner">Bant Ayarlayıcı</string>
+    <string name="band_tuner_desc">Bantlar arasında gezinin ve seviyeyi 0,1 dB adımlarla ince ayarlayın</string>
+    <string name="band_tuner_position">Bant %1$d / %2$d</string>
+    <string name="band_tuner_label">Bant %1$d · %2$s</string>
+    <string name="band_tuner_previous">Önceki bant</string>
+    <string name="band_tuner_next">Sonraki bant</string>
+    <string name="band_tuner_decrement">−0,1 dB</string>
+    <string name="band_tuner_reset">0 dB</string>
+    <string name="band_tuner_increment">+0,1 dB</string>
 
     <!-- Dolby intelligent EQ -->
     <string name="dolby_ieq">Akıllı ekolayzer</string>
     <string name="dolby_balanced">Dengeli</string>
     <string name="dolby_warm">Ilık</string>
     <string name="dolby_detailed">Detaylı</string>
+    <string name="dolby_ieq_off_summary">Akıllı ekolayzer olmadan mevcut profili kullanın.</string>
+    <string name="dolby_ieq_detailed_summary">İnce ayrıntıları ve netliği ön plana çıkarır.</string>
+    <string name="dolby_ieq_balanced_summary">Bas, orta ve tizleri dengede tutar.</string>
+    <string name="dolby_ieq_warm_summary">Sesinize daha yumuşak ve sıcak bir karakter kazandırır.</string>
 
     <!-- Per-App Audio Profiles -->
     <string name="app_profiles_title">Uygulama başına ses profili</string>
@@ -154,7 +176,7 @@
     <string name="open_settings">Ayarları aç</string>
     <string name="cancel">İptal et</string>
 
-    <!-- import export -->
+    <!--import export -->
     <string name="import_export_presets">İçeri/Dışarı aktar</string>
     <string name="import_presets">İçeri aktar</string>
     <string name="import_presets_description">Ön ayarları dosya veya pano ile içeri aktar</string>

@@ -5,6 +5,13 @@
 -->
 <resources>
 
+    <!-- Expressive UI -->
+    <string name="dolby_credits">Autorzy</string>
+    <string name="dolby_more_options">Więcej opcji</string>
+    <string name="dolby_save_preset">Zapisz preset</string>
+    <string name="dolby_equalizer_summary">Kształtuj dźwięk, częstotliwość po częstotliwości</string>
+    <string name="dolby_advanced_summary">Dostrój szczegóły swojego doświadczenia słuchowego</string>
+
     <!-- Dolby Atmos -->
     <string name="dolby_title">Dolby Atmos</string>
     <string name="dolby_summary">Doświadcz immersyjnego dźwięku</string>
@@ -47,9 +54,11 @@
     <string name="dolby_hp_virtualizer_dolby_strength">Siła wirtualizacji przestrzennej</string>
     <string name="dolby_dialogue_enhancer_dolby_strength">Siła wzmocnienia dialogów</string>
     <string name="dolby_notification_listener_label">Usługa Dolby Atmos</string>
+    <string name="loading">Ładowanie...</string>
 
     <!-- Dolby profiles -->
     <string name="dolby_profile_dynamic">Dynamiczny</string>
+    <string name="dolby_profile_dynamic_summary">Automatycznie dostosowuje się do dźwięku</string>
     <string name="dolby_profile_video">Film/Wideo</string>
     <string name="dolby_profile_music">Muzyka</string>
     <string name="dolby_profile_game">Gra</string>
@@ -80,11 +89,11 @@
     <string name="dolby_preset_rb">R&amp;B</string>
     <string name="dolby_preset_vocal">Wzmocnienie wokalu</string>
     <string name="dolby_preset_custom">Niestandardowy</string>
-
-    <!-- Dolby equalizer UI -->
     <string name="equalizer">Korektor</string>
     <string name="advanced">Zaawansowane</string>
     <string name="home">Strona główna</string>
+
+    <!-- Dolby equalizer UI -->
     <string name="dolby_geq_slider_label_gain">Wzmocnienie</string>
     <string name="dolby_geq_preset">Preset</string>
     <string name="dolby_geq_preset_name">Nazwa presetu</string>
@@ -101,12 +110,25 @@
     <string name="locked">Zablokowane</string>
     <string name="band_configuration">Konfiguracja pasm</string>
     <string name="choose_equalizer_precision">Wybierz precyzję korektora: więcej pasm = dokładniejsza kontrola</string>
+    <string name="band_tuner">Strojenie pasm</string>
+    <string name="band_tuner_desc">Przechodź między pasmami i dostrajaj wzmocnienie co 0,1 dB</string>
+    <string name="band_tuner_position">Pasmo %1$d z %2$d</string>
+    <string name="band_tuner_label">Pasmo %1$d · %2$s</string>
+    <string name="band_tuner_previous">Poprzednie pasmo</string>
+    <string name="band_tuner_next">Następne pasmo</string>
+    <string name="band_tuner_decrement">−0,1 dB</string>
+    <string name="band_tuner_reset">0 dB</string>
+    <string name="band_tuner_increment">+0,1 dB</string>
 
     <!-- Dolby intelligent EQ -->
     <string name="dolby_ieq">Inteligentny korektor</string>
     <string name="dolby_balanced">Zrównoważony</string>
     <string name="dolby_warm">Ciepły</string>
     <string name="dolby_detailed">Szczegółowy</string>
+    <string name="dolby_ieq_off_summary">Użyj bieżącego profilu bez inteligentnego korektora.</string>
+    <string name="dolby_ieq_detailed_summary">Wydobywa subtelne szczegóły i wyrazistość.</string>
+    <string name="dolby_ieq_balanced_summary">Utrzymuje równowagę między basem, środkiem i górą.</string>
+    <string name="dolby_ieq_warm_summary">Nadaje dźwiękowi łagodniejszy, cieplejszy charakter.</string>
 
     <!-- Per-App Audio Profiles -->
     <string name="app_profiles_title">Profile dźwięku dla aplikacji</string>
@@ -154,7 +176,7 @@
     <string name="open_settings">Otwórz ustawienia</string>
     <string name="cancel">Anuluj</string>
 
-    <!-- import export -->
+    <!--import export -->
     <string name="import_export_presets">Import/Eksport presetów</string>
     <string name="import_presets">Importuj presety</string>
     <string name="import_presets_description">Importuj presety z plików lub schowka</string>

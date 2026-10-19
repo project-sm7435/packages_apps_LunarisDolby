@@ -89,15 +89,7 @@ class DolbyRepository(private val context: Context) : AutoCloseable {
                 sharedDolbyEffect = null
                 dolbyEffect = getOrCreateDolbyEffect()
             }
-            val enabled = defaultPrefs.getBoolean(DolbyConstants.PREF_ENABLE, false)
-            try {
-                dolbyEffect.dsOn = enabled
-            } catch (e: Exception) {
-                DolbyConstants.dlog(TAG, "Error restoring dsOn: ${e.message}")
-            }
-            if (enabled) {
-                restoreSavedProfileIfNeeded()
-            }
+            restoreSavedProfileIfNeeded()
         }
     }
 
@@ -206,7 +198,13 @@ class DolbyRepository(private val context: Context) : AutoCloseable {
     }
 
     fun getDolbyEnabled(): Boolean {
-        return defaultPrefs.getBoolean(DolbyConstants.PREF_ENABLE, false)
+        return try {
+            checkEffect()
+            dolbyEffect.dsOn
+        } catch (e: Exception) {
+            DolbyConstants.dlog(TAG, "Error getting Dolby enabled state: ${e.message}")
+            defaultPrefs.getBoolean(DolbyConstants.PREF_ENABLE, false)
+        }
     }
 
     fun setDolbyEnabled(enabled: Boolean) {

@@ -5,6 +5,13 @@
 -->
 <resources>
 
+    <!-- Expressive UI -->
+    <string name="dolby_credits">Créditos</string>
+    <string name="dolby_more_options">Mais opções</string>
+    <string name="dolby_save_preset">Salvar predefinição</string>
+    <string name="dolby_equalizer_summary">Molde seu som, frequência por frequência</string>
+    <string name="dolby_advanced_summary">Ajuste os detalhes da sua experiência de audição</string>
+
     <!-- Dolby Atmos -->
     <string name="dolby_title">Dolby Atmos</string>
     <string name="dolby_summary">Experimente um áudio imersivo</string>
@@ -47,9 +54,11 @@
     <string name="dolby_hp_virtualizer_dolby_strength">Intensidade do virtualizador surround</string>
     <string name="dolby_dialogue_enhancer_dolby_strength">Intensidade do realçador de diálogo</string>
     <string name="dolby_notification_listener_label">Serviço Dolby Atmos</string>
+    <string name="loading">Carregando...</string>
 
     <!-- Dolby profiles -->
     <string name="dolby_profile_dynamic">Dinâmico</string>
+    <string name="dolby_profile_dynamic_summary">Adapta-se automaticamente ao seu áudio</string>
     <string name="dolby_profile_video">Filme/Vídeo</string>
     <string name="dolby_profile_music">Música</string>
     <string name="dolby_profile_game">Jogos</string>
@@ -80,11 +89,11 @@
     <string name="dolby_preset_rb">R&amp;B</string>
     <string name="dolby_preset_vocal">Reforço vocal</string>
     <string name="dolby_preset_custom">Personalizado</string>
-
-    <!-- Dolby equalizer UI -->
     <string name="equalizer">Equalizador</string>
     <string name="advanced">Avançado</string>
     <string name="home">Início</string>
+
+    <!-- Dolby equalizer UI -->
     <string name="dolby_geq_slider_label_gain">Ganho</string>
     <string name="dolby_geq_preset">Predefinição</string>
     <string name="dolby_geq_preset_name">Nome da predefinição</string>
@@ -101,12 +110,25 @@
     <string name="locked">Bloqueado</string>
     <string name="band_configuration">Configuração de banda</string>
     <string name="choose_equalizer_precision">Escolha a precisão do equalizador: mais bandas = controle mais fino</string>
+    <string name="band_tuner">Ajuste de banda</string>
+    <string name="band_tuner_desc">Percorra as bandas e ajuste o ganho em incrementos de 0,1 dB</string>
+    <string name="band_tuner_position">Banda %1$d de %2$d</string>
+    <string name="band_tuner_label">Banda %1$d · %2$s</string>
+    <string name="band_tuner_previous">Banda anterior</string>
+    <string name="band_tuner_next">Próxima banda</string>
+    <string name="band_tuner_decrement">−0,1 dB</string>
+    <string name="band_tuner_reset">0 dB</string>
+    <string name="band_tuner_increment">+0,1 dB</string>
 
     <!-- Dolby intelligent EQ -->
     <string name="dolby_ieq">Equalizador inteligente</string>
     <string name="dolby_balanced">Equilibrado</string>
     <string name="dolby_warm">Quente</string>
     <string name="dolby_detailed">Detalhado</string>
+    <string name="dolby_ieq_off_summary">Use o perfil atual sem o equalizador inteligente.</string>
+    <string name="dolby_ieq_detailed_summary">Destaca detalhes sutis e clareza.</string>
+    <string name="dolby_ieq_balanced_summary">Mantém graves, médios e agudos em equilíbrio.</string>
+    <string name="dolby_ieq_warm_summary">Dá ao seu som um caráter mais suave e quente.</string>
 
     <!-- Per-App Audio Profiles -->
     <string name="app_profiles_title">Perfis de áudio por app</string>
@@ -154,7 +176,7 @@
     <string name="open_settings">Abrir configurações</string>
     <string name="cancel">Cancelar</string>
 
-    <!-- import export -->
+    <!--import export -->
     <string name="import_export_presets">Importar/Exportar predefinições</string>
     <string name="import_presets">Importar predefinições</string>
     <string name="import_presets_description">Importe predefinições de arquivos ou da área de transferência</string>

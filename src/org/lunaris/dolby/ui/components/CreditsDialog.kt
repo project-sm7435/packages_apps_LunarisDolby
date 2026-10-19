@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
+
 package org.lunaris.dolby.ui.components
 
 import android.content.Intent
@@ -174,8 +176,7 @@ fun CreditsDialog(
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
                             text = "Credits & Contributors",
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.SemiBold,
+                            style = MaterialTheme.typography.headlineMediumEmphasized,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     }
@@ -256,8 +257,7 @@ fun CreditsDialog(
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
                                         text = "View on GitHub",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.SemiBold,
+                                        style = MaterialTheme.typography.titleMediumEmphasized,
                                         color = MaterialTheme.colorScheme.onPrimaryContainer
                                     )
                                     Text(
@@ -278,8 +278,7 @@ fun CreditsDialog(
                     item {
                         Text(
                             text = "Main Contributors",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
+                            style = MaterialTheme.typography.titleMediumEmphasized,
                             color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
                         )
@@ -290,8 +289,7 @@ fun CreditsDialog(
                     item {
                         Text(
                             text = "Translation Contributors",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
+                            style = MaterialTheme.typography.titleMediumEmphasized,
                             color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
                         )
@@ -347,8 +345,7 @@ fun CreditsDialog(
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(
                                             text = "Missing your language?",
-                                            style = MaterialTheme.typography.titleMedium,
-                                            fontWeight = FontWeight.SemiBold,
+                                            style = MaterialTheme.typography.titleMediumEmphasized,
                                             color = MaterialTheme.colorScheme.onPrimaryContainer
                                         )
                                         Spacer(modifier = Modifier.height(2.dp))
@@ -519,8 +516,7 @@ private fun ContributorCard(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = contributor.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.titleMediumEmphasized,
                     color = onContainer
                 )
                 Spacer(modifier = Modifier.height(2.dp))
@@ -628,8 +624,7 @@ private fun CompactTranslationCard(
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
                         text = target.name,
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold,
+                        style = MaterialTheme.typography.titleSmallEmphasized,
                         color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis

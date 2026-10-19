@@ -5,6 +5,13 @@
 -->
 <resources>
 
+    <!-- Expressive UI -->
+    <string name="dolby_credits">Ghi công</string>
+    <string name="dolby_more_options">Tùy chọn khác</string>
+    <string name="dolby_save_preset">Lưu cấu hình</string>
+    <string name="dolby_equalizer_summary">Tạo nên âm thanh của bạn, từng tần số một</string>
+    <string name="dolby_advanced_summary">Tinh chỉnh chi tiết trải nghiệm nghe của bạn</string>
+
     <!-- Dolby Atmos -->
     <string name="dolby_title">Dolby Atmos</string>
     <string name="dolby_summary">Trải nghiệm âm thanh sống động</string>
@@ -51,6 +58,7 @@
 
     <!-- Dolby profiles -->
     <string name="dolby_profile_dynamic">Năng động</string>
+    <string name="dolby_profile_dynamic_summary">Tự động thích ứng với âm thanh của bạn</string>
     <string name="dolby_profile_video">Phim/Video</string>
     <string name="dolby_profile_music">Âm nhạc</string>
     <string name="dolby_profile_game">Trò chơi</string>
@@ -117,6 +125,10 @@
     <string name="dolby_balanced">Cân bằng</string>
     <string name="dolby_warm">Ấm áp</string>
     <string name="dolby_detailed">Chi tiết</string>
+    <string name="dolby_ieq_off_summary">Dùng cấu hình hiện tại mà không có cân bằng âm thông minh.</string>
+    <string name="dolby_ieq_detailed_summary">Làm nổi bật các chi tiết tinh tế và độ rõ nét.</string>
+    <string name="dolby_ieq_balanced_summary">Giữ cân bằng giữa âm trầm, trung và cao.</string>
+    <string name="dolby_ieq_warm_summary">Mang đến âm thanh mềm mại và ấm áp hơn.</string>
 
     <!-- Per-App Audio Profiles -->
     <string name="app_profiles_title">Hồ sơ âm thanh theo từng ứng dụng</string>

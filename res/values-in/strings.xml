@@ -5,6 +5,13 @@
 -->
 <resources>
 
+    <!-- Expressive UI -->
+    <string name="dolby_credits">Kredit</string>
+    <string name="dolby_more_options">Opsi lainnya</string>
+    <string name="dolby_save_preset">Simpan preset</string>
+    <string name="dolby_equalizer_summary">Bentuk suara Anda, frekuensi demi frekuensi</string>
+    <string name="dolby_advanced_summary">Atur detail pengalaman mendengarkan Anda</string>
+
     <!-- Dolby Atmos -->
     <string name="dolby_title">Dolby Atmos</string>
     <string name="dolby_summary">Pengalaman audio yang imersif</string>
@@ -47,9 +54,11 @@
     <string name="dolby_hp_virtualizer_dolby_strength">Kekuatan virtualisasi surround</string>
     <string name="dolby_dialogue_enhancer_dolby_strength">Kekuatan peningkat dialog</string>
     <string name="dolby_notification_listener_label">Layanan Dolby Atmos</string>
+    <string name="loading">Memuat...</string>
 
     <!-- Dolby profiles -->
     <string name="dolby_profile_dynamic">Dinamis</string>
+    <string name="dolby_profile_dynamic_summary">Menyesuaikan otomatis dengan audio Anda</string>
     <string name="dolby_profile_video">Film/Video</string>
     <string name="dolby_profile_music">Musik</string>
     <string name="dolby_profile_game">Permainan</string>
@@ -80,11 +89,11 @@
     <string name="dolby_preset_rb">R&amp;B</string>
     <string name="dolby_preset_vocal">Peningkat Vokal</string>
     <string name="dolby_preset_custom">Kustom</string>
-
-    <!-- Dolby equalizer UI -->
     <string name="equalizer">Equalizer</string>
     <string name="advanced">Lanjutan</string>
     <string name="home">Beranda</string>
+
+    <!-- Dolby equalizer UI -->
     <string name="dolby_geq_slider_label_gain">Gain</string>
     <string name="dolby_geq_preset">Preset</string>
     <string name="dolby_geq_preset_name">Nama preset</string>
@@ -101,12 +110,25 @@
     <string name="locked">Terkunci</string>
     <string name="band_configuration">Konfigurasi band</string>
     <string name="choose_equalizer_precision">Pilih presisi equalizer: semakin banyak band, semakin detail kontrol</string>
+    <string name="band_tuner">Penyetel Band</string>
+    <string name="band_tuner_desc">Telusuri band dan atur gain dengan kenaikan 0,1 dB</string>
+    <string name="band_tuner_position">Band %1$d dari %2$d</string>
+    <string name="band_tuner_label">Band %1$d · %2$s</string>
+    <string name="band_tuner_previous">Band sebelumnya</string>
+    <string name="band_tuner_next">Band berikutnya</string>
+    <string name="band_tuner_decrement">−0,1 dB</string>
+    <string name="band_tuner_reset">0 dB</string>
+    <string name="band_tuner_increment">+0,1 dB</string>
 
     <!-- Dolby intelligent EQ -->
     <string name="dolby_ieq">Equalizer cerdas</string>
     <string name="dolby_balanced">Seimbang</string>
     <string name="dolby_warm">Hangat</string>
     <string name="dolby_detailed">Detail</string>
+    <string name="dolby_ieq_off_summary">Gunakan profil saat ini tanpa equalizer cerdas.</string>
+    <string name="dolby_ieq_detailed_summary">Menonjolkan detail halus dan kejernihan.</string>
+    <string name="dolby_ieq_balanced_summary">Menjaga bass, mid, dan treble tetap seimbang.</string>
+    <string name="dolby_ieq_warm_summary">Memberi karakter suara yang lebih lembut dan hangat.</string>
 
     <!-- Per-App Audio Profiles -->
     <string name="app_profiles_title">Profil Audio Per Aplikasi</string>
@@ -154,7 +176,7 @@
     <string name="open_settings">Buka setelan</string>
     <string name="cancel">Batal</string>
 
-    <!-- import export -->
+    <!--import export -->
     <string name="import_export_presets">Impor/Ekspor Preset</string>
     <string name="import_presets">Impor Preset</string>
     <string name="import_presets_description">Impor preset dari berkas atau papan klip</string>
