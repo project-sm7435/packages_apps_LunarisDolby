@@ -5,11 +5,13 @@
 
 package org.lunaris.dolby.data
 
+import android.content.ComponentName
 import android.content.Context
 import android.content.SharedPreferences
 import android.media.AudioAttributes
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
+import android.service.quicksettings.TileService
 import org.lunaris.dolby.DolbyConstants
 import org.lunaris.dolby.DolbyConstants.DsParam
 import org.lunaris.dolby.R
@@ -48,8 +50,18 @@ class DolbyRepository(private val context: Context) : AutoCloseable {
 
     private fun getOrCreateDolbyEffect(): DolbyAudioEffect {
         return synchronized(effectLock) {
-            sharedDolbyEffect?.takeIf { it.hasControl() } ?: DolbyAudioEffect(EFFECT_PRIORITY, audioSession = 0).also {
-                sharedDolbyEffect = it
+            val current = sharedDolbyEffect
+            val isHealthy = try {
+                current != null && current.hasControl()
+            } catch (e: Exception) {
+                false
+            }
+            if (isHealthy && current != null) {
+                current
+            } else {
+                DolbyAudioEffect(EFFECT_PRIORITY, audioSession = 0).also {
+                    sharedDolbyEffect = it
+                }
             }
         }
     }
@@ -60,22 +72,24 @@ class DolbyRepository(private val context: Context) : AutoCloseable {
             return
         }
         
-        try {
-            if (!dolbyEffect.hasControl()) {
-                DolbyConstants.dlog(TAG, "Lost audio effect control, recreating")
-                synchronized(effectLock) {
-                    try {
-                        dolbyEffect.release()
-                    } catch (e: Exception) {
-                        DolbyConstants.dlog(TAG, "Error releasing old effect: ${e.message}")
-                    }
-                    sharedDolbyEffect = null
-                    dolbyEffect = getOrCreateDolbyEffect()
-                }
-                restoreSavedProfileIfNeeded()
-            }
+        val needsRecreate = try {
+            !dolbyEffect.hasControl()
         } catch (e: Exception) {
-            DolbyConstants.dlog(TAG, "Error checking effect: ${e.message}")
+            true
+        }
+
+        if (needsRecreate) {
+            DolbyConstants.dlog(TAG, "Lost audio effect control, recreating")
+            synchronized(effectLock) {
+                try {
+                    dolbyEffect.release()
+                } catch (e: Exception) {
+                    DolbyConstants.dlog(TAG, "Error releasing old effect: ${e.message}")
+                }
+                sharedDolbyEffect = null
+                dolbyEffect = getOrCreateDolbyEffect()
+            }
+            restoreSavedProfileIfNeeded()
         }
     }
 
@@ -185,23 +199,25 @@ class DolbyRepository(private val context: Context) : AutoCloseable {
 
     fun getDolbyEnabled(): Boolean {
         return try {
+            checkEffect()
             dolbyEffect.dsOn
         } catch (e: Exception) {
             DolbyConstants.dlog(TAG, "Error getting Dolby enabled state: ${e.message}")
-            false
+            defaultPrefs.getBoolean(DolbyConstants.PREF_ENABLE, false)
         }
     }
 
     fun setDolbyEnabled(enabled: Boolean) {
         if (isReleased) return
         
+        defaultPrefs.edit().putBoolean(DolbyConstants.PREF_ENABLE, enabled).apply()
         try {
             checkEffect()
             dolbyEffect.dsOn = enabled
-            defaultPrefs.edit().putBoolean(DolbyConstants.PREF_ENABLE, enabled).apply()
         } catch (e: Exception) {
             DolbyConstants.dlog(TAG, "Error setting Dolby enabled: ${e.message}")
         }
+        requestTileUpdate()
     }
 
     fun getCurrentProfile(): Int {
@@ -228,6 +244,7 @@ class DolbyRepository(private val context: Context) : AutoCloseable {
             restoreProfilePreset(profile)
             _currentProfile.value = profile
             DolbyConstants.dlog(TAG, "Profile set to: $profile")
+            requestTileUpdate()
         } catch (e: Exception) {
             DolbyConstants.dlog(TAG, "Error setting current profile: ${e.message}")
         }
@@ -899,6 +916,17 @@ class DolbyRepository(private val context: Context) : AutoCloseable {
     
     override fun close() {
         release()
+    }
+
+    fun requestTileUpdate() {
+        try {
+            TileService.requestListeningState(
+                context,
+                ComponentName(context, "org.lunaris.dolby.tile.DolbyTileService")
+            )
+        } catch (e: Exception) {
+            DolbyConstants.dlog(TAG, "Failed to request tile update: ${e.message}")
+        }
     }
 
     companion object {
