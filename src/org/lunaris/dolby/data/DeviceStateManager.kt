@@ -68,7 +68,6 @@ class DeviceStateManager(private val context: Context) {
         val editor = prefs.edit()
 
         editor.putInt(KEY_VERSION, SNAPSHOT_VERSION)
-        editor.putBoolean(KEY_DOLBY_ENABLED, repository.getDolbyEnabled())
         editor.putInt(KEY_PROFILE, profile)
         editor.putString(KEY_BAND_MODE, repository.getBandMode().value)
 
@@ -120,7 +119,6 @@ class DeviceStateManager(private val context: Context) {
         }
 
         return try {
-            val enabled = prefs.getBoolean(KEY_DOLBY_ENABLED, true)
             val profile = prefs.getInt(KEY_PROFILE, 0)
             val bandModeVal = prefs.getString(KEY_BAND_MODE, BandMode.TEN_BAND.value) ?: BandMode.TEN_BAND.value
             repository.setBandMode(BandMode.fromValue(bandModeVal))
@@ -156,7 +154,6 @@ class DeviceStateManager(private val context: Context) {
                 }
             }
 
-            repository.setDolbyEnabled(enabled)
             repository.setCurrentProfile(profile)
             repository.updateEffectiveGains(profile)
 
@@ -204,12 +201,11 @@ class DeviceStateManager(private val context: Context) {
     companion object {
         private const val TAG = "DeviceStateManager"
 
-        const val SNAPSHOT_VERSION = 2
+        const val SNAPSHOT_VERSION = 3
 
         val SUPPORTED_PROFILES = listOf(0, 1, 2, 3, 4, 5, 6)
 
         private const val KEY_VERSION = "snapshot_version"
-        private const val KEY_DOLBY_ENABLED = "enabled"
         private const val KEY_PROFILE = "profile"
         private const val KEY_BAND_MODE = "band_mode"
     }
